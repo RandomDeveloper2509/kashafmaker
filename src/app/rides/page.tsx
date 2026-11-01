@@ -157,35 +157,35 @@ export default function RidesPage() {
               }
             />
           ) : (
-            <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/70">
-                    <th className="px-3.5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
                       Ride #
                     </th>
-                    <th className="px-3.5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
                       Date
                     </th>
-                    <th className="px-3.5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">
                       Route
                     </th>
-                    <th className="px-3.5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden md:table-cell">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden md:table-cell">
                       Driver
                     </th>
-                    <th className="px-3.5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden lg:table-cell">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden lg:table-cell">
                       Vehicle
                     </th>
-                    <th className="px-3 py-3 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    <th className="px-4 py-4 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">
                       Pax
                     </th>
-                    <th className="px-3.5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
                       Status
                     </th>
-                    <th className="px-3.5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell whitespace-nowrap">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell whitespace-nowrap">
                       Kashafmaker
                     </th>
-                    <th className="px-3.5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide sticky right-0 bg-slate-50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
+                    <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide sticky right-0 bg-slate-50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
                       Actions
                     </th>
                   </tr>
@@ -195,15 +195,15 @@ export default function RidesPage() {
                     const kashafDoc = ride.kashafDocuments[0];
                     return (
                       <tr key={ride.id} className="group hover:bg-slate-50/80 transition-colors">
-                        <td className="px-3.5 py-2.5 whitespace-nowrap">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           <span className="font-mono text-xs whitespace-nowrap bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md font-semibold border border-slate-200/60 inline-block">
                             {ride.rideNumber}
                           </span>
                         </td>
-                        <td className="px-3.5 py-2.5 text-xs text-slate-600 whitespace-nowrap font-medium">
+                        <td className="px-4 py-3.5 text-xs text-slate-600 whitespace-nowrap font-medium">
                           {formatDate(ride.date)}
                         </td>
-                        <td className="px-3.5 py-2.5">
+                        <td className="px-4 py-3.5">
                           <div className="flex items-center gap-1.5 text-xs text-slate-700 min-w-0 max-w-[220px]">
                             <MapPin className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                             <span className="font-semibold text-slate-900 truncate" title={ride.pickup}>{ride.pickup}</span>
@@ -211,7 +211,7 @@ export default function RidesPage() {
                             <span className="truncate text-slate-600" title={ride.destination}>{ride.destination}</span>
                           </div>
                         </td>
-                        <td className="px-3.5 py-2.5 hidden md:table-cell">
+                        <td className="px-4 py-3.5 hidden md:table-cell">
                           {ride.driver?.name ? (
                             <div className="flex items-center gap-1.5 text-xs">
                               <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 shrink-0">
@@ -225,7 +225,7 @@ export default function RidesPage() {
                             <span className="text-xs text-slate-400 italic">Unassigned</span>
                           )}
                         </td>
-                        <td className="px-3.5 py-2.5 hidden lg:table-cell">
+                        <td className="px-4 py-3.5 hidden lg:table-cell">
                           {ride.vehicle ? (
                             <div className="text-xs">
                               <p className="font-medium text-slate-800 truncate max-w-[120px]" title={`${ride.vehicle.make} ${ride.vehicle.model}`}>
@@ -237,13 +237,13 @@ export default function RidesPage() {
                             <span className="text-xs text-slate-400 italic">Unassigned</span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <div className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
                             <Users className="h-3 w-3 text-slate-500" />
                             {ride._count?.passengers ?? 0}
                           </div>
                         </td>
-                        <td className="px-3.5 py-2.5 whitespace-nowrap">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
                           <Badge variant={statusVariant(ride.status)}>
                             <StatusDot status={statusDot(ride.status)} />
                             {ride.status === "SCHEDULED"
@@ -253,7 +253,7 @@ export default function RidesPage() {
                               : ride.status.replace("_", " ")}
                           </Badge>
                         </td>
-                        <td className="px-3.5 py-2.5 hidden sm:table-cell whitespace-nowrap">
+                        <td className="px-4 py-3.5 hidden sm:table-cell whitespace-nowrap">
                           {kashafDoc ? (
                             <div className="flex items-center gap-1.5">
                               <Badge variant="success" className="text-[11px] py-0.5 px-2">
@@ -279,7 +279,7 @@ export default function RidesPage() {
                             <Badge variant="default" className="text-[11px] py-0.5 px-2">Pending</Badge>
                           )}
                         </td>
-                        <td className="px-3.5 py-2.5 text-right sticky right-0 bg-white group-hover:bg-slate-50/90 transition-colors shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
+                        <td className="px-4 py-3.5 text-right sticky right-0 bg-white group-hover:bg-slate-50/90 transition-colors shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
                           <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                             <Link
                               href={`/rides/${ride.id}/edit`}
