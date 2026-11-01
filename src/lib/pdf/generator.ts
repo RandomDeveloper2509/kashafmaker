@@ -160,6 +160,19 @@ function wrapTextToLines(
     current = chunk;
   };
 
+  // Special handling for 2-line wrapping: split words evenly
+  if (maxLines === 2 && words.length >= 3) {
+    const midPoint = Math.ceil(words.length / 2);
+    const firstLine = words.slice(0, midPoint).join(" ");
+    const secondLine = words.slice(midPoint).join(" ");
+
+    // Check if both lines fit within maxWidth
+    if (font.widthOfTextAtSize(firstLine, fontSize) <= maxWidth &&
+        font.widthOfTextAtSize(secondLine, fontSize) <= maxWidth) {
+      return [firstLine, secondLine];
+    }
+  }
+
   for (const word of words) {
     if (lines.length >= maxLines) break;
     const trial = current ? `${current} ${word}` : word;
