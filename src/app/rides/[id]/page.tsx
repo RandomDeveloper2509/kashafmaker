@@ -209,7 +209,7 @@ export default function RideDetailPage() {
               <Button
                 onClick={handleApproveRide}
                 disabled={updatingStatus}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm text-sm"
               >
                 <CheckCircle className="h-4 w-4 mr-1.5" />
                 {updatingStatus ? "Approving…" : "Approve Ride"}
@@ -221,7 +221,7 @@ export default function RideDetailPage() {
               <Button
                 onClick={generateKashaf}
                 disabled={generating}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm text-sm"
               >
                 <Sparkles className="h-4 w-4 mr-1.5" />
                 {generating ? "Generating Kashaf…" : latestDoc ? "Regenerate Kashaf" : "Generate Kashaf"}
@@ -235,7 +235,7 @@ export default function RideDetailPage() {
                 href={`/api/documents/${latestDoc.id}?pdf=1`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-sm"
               >
                 <Printer className="h-4 w-4 mr-1.5" /> View / Print PDF
               </Button>
@@ -244,7 +244,7 @@ export default function RideDetailPage() {
             <Button
               variant="outline"
               onClick={duplicateRide}
-              className="border-slate-200 text-slate-700 hover:bg-slate-50"
+              className="border-slate-200 text-slate-700 hover:bg-slate-50 text-sm"
             >
               <Copy className="h-4 w-4 mr-1.5" /> Duplicate
             </Button>
@@ -303,9 +303,9 @@ export default function RideDetailPage() {
             <Button
               onClick={generateKashaf}
               disabled={generating}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-4 py-2"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 py-2"
             >
-              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              <Sparkles className="h-4 w-4 mr-1.5" />
               {generating ? "Generating…" : "Generate Kashaf Now"}
             </Button>
           )}
@@ -496,25 +496,25 @@ export default function RideDetailPage() {
                         href={`/api/documents/${doc.id}?pdf=1`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-4 py-2 shadow-sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3 py-1.5 shadow-sm"
                       >
-                        <Printer className="h-4 w-4 mr-1.5" /> View / Print
+                        <Printer className="h-3.5 w-3.5 mr-1" /> View / Print
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         href={`/api/documents/${doc.id}?download=1`}
-                        className="border-slate-300 text-slate-700 hover:bg-slate-50 text-sm px-4 py-2"
+                        className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5"
                       >
-                        <Download className="h-4 w-4 mr-1.5" /> Download
+                        <Download className="h-3.5 w-3.5 mr-1" /> Download
                       </Button>
                       <button
                         type="button"
                         onClick={() => setDeleteDocId(doc.id)}
-                        className="p-2 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                        className="p-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                         title="Delete Kashaf PDF"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
