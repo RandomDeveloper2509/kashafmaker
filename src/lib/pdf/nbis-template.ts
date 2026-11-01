@@ -42,7 +42,7 @@ export function getNbisKashafFieldConfig(): TemplateFieldConfig {
       field("p1-dest", "destination", 1, 164, 433, 78, { fontSize: 11, pdfBaseline: 348.5 }),
       field("p2-phone", "driver_phone", 2, 36, 158, 90, { fontSize: 10, pdfBaseline: 623 }),
       field("p2-iqama", "iqama_number", 2, 148, 158, 78, { fontSize: 10, pdfBaseline: 623 }),
-      field("p2-driver", "driver_name", 2, 248, 158, 118, { fontSize: 10, pdfBaseline: 623 }),
+      field("p2-driver", "driver_name", 2, 236, 158, 150, { fontSize: 10, pdfBaseline: 623 }),
       field("p2-plate", "plate_number", 2, 390, 158, 72, { fontSize: 10, pdfBaseline: 623 }),
       field("p2-vehicle", "vehicle_display", 2, 484, 158, 90, { fontSize: 10, pdfBaseline: 623 }),
       field("p2-notes", "notes", 2, 36, 238, 204, { fontSize: 10, pdfBaseline: 543 }),

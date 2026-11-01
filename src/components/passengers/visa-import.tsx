@@ -35,6 +35,7 @@ interface ScanState {
   draft: PassengerVisaFields;
   error: string;
   confirmed: boolean;
+  abortController?: AbortController;
 }
 
 interface VisaImportButtonProps {
@@ -74,38 +75,52 @@ export function VisaImportButton({
   };
 
   const close = () => {
-    const anyScanning = scans.some((s) => s.status === "scanning");
-    if (anyScanning) return;
+    // Force-cancel any in-progress scans
+    setScans((prev) =>
+      prev.map((s) => {
+        if (s.status === "scanning") {
+          s.abortController?.abort();
+          return { ...s, status: "error", error: "Cancelled", abortController: undefined };
+        }
+        return s;
+      })
+    );
     setOpen(false);
     reset();
   };
 
-  const extractFile = async (selected: File, renderedPage?: Blob) => {
+  const extractFile = async (selected: File, renderedPage?: Blob, signal?: AbortSignal) => {
     const formData = new FormData();
     formData.append(
       "file",
       renderedPage ? new File([renderedPage], "visa-page.png", { type: "image/png" }) : selected
     );
-    const res = await fetch("/api/extract-visa", { method: "POST", body: formData });
+    const res = await fetch("/api/extract-visa", { method: "POST", body: formData, signal });
     const payload = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(payload.error || "Failed to extract visa information");
     return payload as VisaExtractionResult;
   };
 
   const scanOne = async (idx: number, file: File) => {
-    // Mark as scanning
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    // Mark as scanning, store controller
     setScans((prev) =>
-      prev.map((s, i) => (i === idx ? { ...s, status: "scanning", error: "" } : s))
+      prev.map((s, i) =>
+        i === idx ? { ...s, status: "scanning", error: "", abortController: controller } : s
+      )
     );
 
     try {
-      let payload = await extractFile(file);
+      let payload = await extractFile(file, undefined, signal);
       const isPdf =
         file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
       if ((payload.needsPageRender || !isExtractionComplete(payload)) && isPdf) {
         const pages = await renderPdfPagesToBlobs(file, 2);
         for (const page of pages) {
-          const ocrPayload = await extractFile(file, page);
+          if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
+          const ocrPayload = await extractFile(file, page, signal);
           payload = mergeExtractions(payload, ocrPayload);
           if (isExtractionComplete(payload)) break;
         }
@@ -118,14 +133,15 @@ export function VisaImportButton({
       };
       setScans((prev) =>
         prev.map((s, i) =>
-          i === idx ? { ...s, status: "done", result: payload, draft } : s
+          i === idx ? { ...s, status: "done", result: payload, draft, abortController: undefined } : s
         )
       );
     } catch (err) {
+      if ((err as Error)?.name === "AbortError") return; // silently cancelled
       setScans((prev) =>
         prev.map((s, i) =>
           i === idx
-            ? { ...s, status: "error", error: err instanceof Error ? err.message : "Extraction failed" }
+            ? { ...s, status: "error", error: err instanceof Error ? err.message : "Extraction failed", abortController: undefined }
             : s
         )
       );
@@ -153,10 +169,26 @@ export function VisaImportButton({
     setOpen(true);
     if (inputRef.current) inputRef.current.value = "";
 
-    // Kick off scanning all files concurrently
-    newScans.forEach((s, i) => {
-      void scanOne(i, s.file);
-    });
+    // Sequential queue — max 2 concurrent to avoid rate limits
+    const runQueue = async () => {
+      const MAX_CONCURRENT = 2;
+      let nextIdx = 0;
+      const inFlight: Promise<void>[] = [];
+
+      const startNext = async (): Promise<void> => {
+        if (nextIdx >= newScans.length) return;
+        const i = nextIdx++;
+        await scanOne(i, newScans[i].file);
+        // When one finishes, start the next
+        await startNext();
+      };
+
+      for (let slot = 0; slot < Math.min(MAX_CONCURRENT, newScans.length); slot++) {
+        inFlight.push(startNext());
+      }
+      await Promise.all(inFlight);
+    };
+    void runQueue();
   };
 
   const retry = (idx: number) => {
@@ -333,9 +365,27 @@ export function VisaImportButton({
                 {/* Fields panel */}
                 <div className="space-y-4">
                   {current.status === "scanning" && (
-                    <div className="flex items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm text-indigo-800">
-                      <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
-                      <span>Analyzing visa with AI Vision…</span>
+                    <div className="flex items-center justify-between gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm text-indigo-800">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                        <span>Analyzing visa with AI Vision…</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="text-xs text-indigo-600 underline hover:text-indigo-800"
+                        onClick={() => {
+                          current.abortController?.abort();
+                          setScans((prev) =>
+                            prev.map((s, i) =>
+                              i === currentIdx
+                                ? { ...s, status: "error", error: "Cancelled", abortController: undefined }
+                                : s
+                            )
+                          );
+                        }}
+                      >
+                        Cancel
+                      </button>
                     </div>
                   )}
                   {current.status === "error" && (
@@ -419,7 +469,7 @@ export function VisaImportButton({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      <Button type="button" variant="outline" onClick={close} disabled={anyScanning}>
+                      <Button type="button" variant="outline" onClick={close}>
                         Cancel
                       </Button>
                       {scans.length > 1 && (

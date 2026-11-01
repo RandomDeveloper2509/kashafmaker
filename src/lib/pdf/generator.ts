@@ -1,4 +1,4 @@
-import {
+﻿import {
   PDFDocument,
   PDFImage,
   rgb,
@@ -36,6 +36,7 @@ async function readFontBytes(fontFileName: string): Promise<Buffer | null> {
     return fontBytesCache.get(fontFileName)!;
   }
   const candidates = [
+    path.join(process.cwd(), "public", "fonts", fontFileName),
     path.join(UPLOAD_DIR, "fonts", fontFileName),
     path.join(process.cwd(), "uploads", "fonts", fontFileName),
     path.join(process.cwd(), "assets", fontFileName),
@@ -113,11 +114,11 @@ function getTextX(
   }
 }
 
-function fitTextToWidth(text: string, font: PDFFont, fontSize: number, maxWidth: number): { text: string; size: number } {
+function fitTextToWidth(text: string, font: PDFFont, fontSize: number, maxWidth: number, minSize = Math.max(9.5, fontSize - 0.5)): { text: string; size: number } {
   if (!maxWidth || maxWidth <= 0) return { text, size: fontSize };
   let size = fontSize;
-  while (size > 6 && font.widthOfTextAtSize(text, size) > maxWidth) {
-    size -= 0.4;
+  while (size > minSize && font.widthOfTextAtSize(text, size) > maxWidth) {
+    size -= 0.2;
   }
   if (font.widthOfTextAtSize(text, size) <= maxWidth) return { text, size };
   let fitted = text;
