@@ -44,7 +44,7 @@ export default function LoginPage() {
             <Car className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">KashafMake</h1>
+            <h1 className="text-3xl font-bold text-white">Kashafmaker</h1>
             <p className="text-indigo-200">Transport Management System</p>
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function LoginPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
               <Car className="h-5 w-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">KashafMake</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Kashafmaker</h1>
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900">Sign in</h2>

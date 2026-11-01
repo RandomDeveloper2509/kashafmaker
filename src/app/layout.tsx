@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "KashafMake - Transport Management",
+  title: "Kashafmaker - Transport Management",
   description: "Transport management and Kashaf PDF generation system",
 };
 

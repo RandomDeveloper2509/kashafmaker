@@ -133,7 +133,7 @@ export default function RidesPage() {
         />
       </div>
 
-      <Card>
+      <Card className="border border-slate-200 shadow-sm">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-16">
@@ -157,7 +157,7 @@ export default function RidesPage() {
               }
             />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/70">
@@ -183,7 +183,7 @@ export default function RidesPage() {
                       Status
                     </th>
                     <th className="px-3.5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell whitespace-nowrap">
-                      Kashaf
+                      Kashafmaker
                     </th>
                     <th className="px-3.5 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide sticky right-0 bg-slate-50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
                       Actions
@@ -217,7 +217,7 @@ export default function RidesPage() {
                               <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 shrink-0">
                                 {ride.driver.name.charAt(0)}
                               </div>
-                              <span className="text-slate-800 font-medium truncate max-w-[130px]" title={ride.driver.name}>
+                              <span className="text-slate-600 truncate max-w-[130px]" title={ride.driver.name}>
                                 {ride.driver.name}
                               </span>
                             </div>
