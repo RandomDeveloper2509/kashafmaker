@@ -283,6 +283,11 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
     driver: context.driver,
     vehicle: context.vehicle,
     passengers: context.passengers,
+    template: {
+      fieldConfig: template.fieldConfig,
+      filePath: template.filePath,
+      pageCount: template.pageCount,
+    },
     generatedAt: new Date().toISOString(),
   };
 

@@ -21,15 +21,33 @@ async function servePdf(id: string, download: boolean) {
   }
 
   // Self-healing: if PDF is missing on disk (e.g. serverless recycled /tmp), regenerate from snapshot!
-  if (!buffer && document.snapshot && document.template) {
+  if (!buffer && document.snapshot) {
     try {
       const { generateKashafPdf, buildContextFromSnapshot, isNbisStyleTemplate, getNbisKashafFieldConfig } = await import("@/lib/pdf");
       const { saveFile } = await import("@/lib/storage");
       const context = buildContextFromSnapshot(document.snapshot as Record<string, unknown>);
-      const fieldConfig = isNbisStyleTemplate(document.template.pageCount)
-        ? getNbisKashafFieldConfig()
-        : (document.template.fieldConfig as unknown as import("@/lib/pdf").TemplateFieldConfig);
-      const pdfBytes = await generateKashafPdf(document.template.filePath, fieldConfig, context);
+
+      // Use template config from snapshot if available (preserves original template), otherwise use current template
+      const snap = document.snapshot as Record<string, unknown>;
+      const templateSnap = snap.template as Record<string, unknown> | undefined;
+      let fieldConfig: unknown;
+      let templateFilePath: string;
+
+      if (templateSnap && templateSnap.fieldConfig && templateSnap.filePath) {
+        // Use the template configuration from the snapshot (what was used when the document was created)
+        fieldConfig = templateSnap.fieldConfig;
+        templateFilePath = templateSnap.filePath as string;
+      } else if (document.template) {
+        // Fallback to current template from database (for backward compatibility with old documents)
+        fieldConfig = isNbisStyleTemplate(document.template.pageCount)
+          ? getNbisKashafFieldConfig()
+          : document.template.fieldConfig;
+        templateFilePath = document.template.filePath;
+      } else {
+        throw new Error("No template available for regeneration");
+      }
+
+      const pdfBytes = await generateKashafPdf(templateFilePath, fieldConfig as import("@/lib/pdf").TemplateFieldConfig, context);
       buffer = Buffer.from(pdfBytes);
       try {
         const newPath = await saveFile("documents", buffer, `${document.documentNumber}.pdf`);
@@ -125,6 +143,7 @@ export async function POST(
 
   const { generateKashafForRide } = await import("@/services/rides");
   try {
+    // Regenerate using the same templateId to preserve template choice
     const document = await generateKashafForRide(existing.rideId, existing.templateId);
     return NextResponse.json(document, { status: 201 });
   } catch (error) {
