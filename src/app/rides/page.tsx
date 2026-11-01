@@ -161,31 +161,31 @@ export default function RidesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/70">
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap w-32">
                       Ride #
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap w-28">
                       Date
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide w-64">
                       Route
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden md:table-cell">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden md:table-cell w-48">
                       Driver
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden lg:table-cell">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden lg:table-cell w-40">
                       Vehicle
                     </th>
-                    <th className="px-4 py-4 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                    <th className="px-4 py-4 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide w-16">
                       Pax
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap w-36">
                       Status
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell whitespace-nowrap">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell whitespace-nowrap w-40">
                       Kashafmaker
                     </th>
-                    <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide sticky right-0 bg-slate-50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
+                    <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide sticky right-0 bg-slate-50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10 w-44">
                       Actions
                     </th>
                   </tr>
@@ -204,7 +204,7 @@ export default function RidesPage() {
                           {formatDate(ride.date)}
                         </td>
                         <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-1.5 text-xs text-slate-700 min-w-0 max-w-[220px]">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-700">
                             <MapPin className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                             <span className="font-semibold text-slate-900 truncate" title={ride.pickup}>{ride.pickup}</span>
                             <ArrowRight className="h-3 w-3 text-slate-400 shrink-0" />
@@ -217,7 +217,7 @@ export default function RidesPage() {
                               <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 shrink-0">
                                 {ride.driver.name.charAt(0)}
                               </div>
-                              <span className="text-slate-600 truncate max-w-[130px]" title={ride.driver.name}>
+                              <span className="text-slate-600 truncate" title={ride.driver.name}>
                                 {ride.driver.name}
                               </span>
                             </div>
