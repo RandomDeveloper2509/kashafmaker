@@ -114,6 +114,94 @@ function getTextX(
   }
 }
 
+function wrapTextToLines(
+  text: string,
+  font: PDFFont,
+  fontSize: number,
+  maxWidth: number,
+  maxLines: number
+): string[] {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) return [];
+  if (!maxWidth || maxWidth <= 0 || font.widthOfTextAtSize(normalized, fontSize) <= maxWidth) {
+    return [normalized];
+  }
+
+  const words = normalized.split(" ");
+  const lines: string[] = [];
+  let current = "";
+
+  const flush = () => {
+    if (current) {
+      lines.push(current);
+      current = "";
+    }
+  };
+
+  const takeChunk = (word: string) => {
+    if (font.widthOfTextAtSize(word, fontSize) <= maxWidth) {
+      current = word;
+      return;
+    }
+    let chunk = "";
+    for (const ch of word) {
+      const next = chunk + ch;
+      if (font.widthOfTextAtSize(next, fontSize) <= maxWidth) {
+        chunk = next;
+      } else {
+        if (chunk) lines.push(chunk);
+        chunk = ch;
+        if (lines.length >= maxLines) {
+          current = "";
+          return;
+        }
+      }
+    }
+    current = chunk;
+  };
+
+  for (const word of words) {
+    if (lines.length >= maxLines) break;
+    const trial = current ? `${current} ${word}` : word;
+    if (font.widthOfTextAtSize(trial, fontSize) <= maxWidth) {
+      current = trial;
+      continue;
+    }
+    flush();
+    if (lines.length >= maxLines) break;
+    takeChunk(word);
+  }
+  flush();
+
+  if (lines.length > maxLines) return lines.slice(0, maxLines);
+  return lines.length ? lines : [normalized];
+}
+
+function wrappedIncludesAll(original: string, lines: string[]): boolean {
+  return lines.join(" ").replace(/\s+/g, "") === original.replace(/\s+/g, "");
+}
+
+function wrapToFit(
+  text: string,
+  font: PDFFont,
+  fontSize: number,
+  maxWidth: number,
+  maxLines: number
+): { lines: string[]; size: number } {
+  if (maxLines <= 1) {
+    const fitted = fitTextToWidth(text, font, fontSize, maxWidth);
+    return { lines: [fitted.text], size: fitted.size };
+  }
+
+  let size = fontSize;
+  let lines = wrapTextToLines(text, font, size, maxWidth, maxLines);
+  while (size > 7 && !wrappedIncludesAll(text, lines)) {
+    size -= 0.25;
+    lines = wrapTextToLines(text, font, size, maxWidth, maxLines);
+  }
+  return { lines: lines.length ? lines : [text], size };
+}
+
 function fitTextToWidth(text: string, font: PDFFont, fontSize: number, maxWidth: number, minSize = Math.max(9.5, fontSize - 0.5)): { text: string; size: number } {
   if (!maxWidth || maxWidth <= 0) return { text, size: fontSize };
   let size = fontSize;
@@ -121,11 +209,8 @@ function fitTextToWidth(text: string, font: PDFFont, fontSize: number, maxWidth:
     size -= 0.2;
   }
   if (font.widthOfTextAtSize(text, size) <= maxWidth) return { text, size };
-  let fitted = text;
-  while (fitted.length > 1 && font.widthOfTextAtSize(`${fitted}...`, size) > maxWidth) {
-    fitted = fitted.slice(0, -1);
-  }
-  return { text: `${fitted}...`, size };
+  const wrapped = wrapTextToLines(text, font, size, maxWidth, 1);
+  return { text: wrapped[0] || text, size };
 }
 
 function flattenTemplateWidgets(pdfDoc: PDFDocument) {
@@ -240,24 +325,26 @@ async function drawTextField(
 
   const arabic = field.direction === "rtl" || containsArabic(text);
   const font = await loadFont(pdfDoc, field.fontFamily, field.bold, arabic);
-  const fitted = fitTextToWidth(text, font, field.fontSize, field.width);
-  const fontSize = fitted.size;
+  const maxLines = field.wrapLines && field.wrapLines > 1 ? field.wrapLines : 1;
+  const wrapped = wrapToFit(text, font, field.fontSize, field.width, maxLines);
+  const fontSize = wrapped.size;
   const pageHeight = page.getHeight();
   const y = field.pdfBaseline ?? pageHeight - field.y - fontSize;
-  const x = getTextX({ ...field, width: field.width }, fitted.text, font, fontSize);
+  const lineGap = fontSize * 1.12;
+
+  const drawLines = (drawFont: PDFFont, lines: string[], size: number) => {
+    lines.forEach((line, index) => {
+      const x = getTextX({ ...field, width: field.width }, line, drawFont, size);
+      drawSpacedText(page, line, x, y - index * lineGap, drawFont, size, field.letterSpacing || 0);
+    });
+  };
 
   try {
-    drawSpacedText(page, fitted.text, x, y, font, fontSize, field.letterSpacing || 0);
+    drawLines(font, wrapped.lines, fontSize);
   } catch {
     const fallback = await loadFont(pdfDoc, "Helvetica", field.bold, false);
-    const safe = fitTextToWidth(text.replace(/[^\x20-\x7E]/g, "?"), fallback, field.fontSize, field.width);
-    page.drawText(safe.text, {
-      x: getTextX(field, safe.text, fallback, safe.size),
-      y,
-      size: safe.size,
-      font: fallback,
-      color: rgb(0, 0, 0),
-    });
+    const safe = wrapToFit(text.replace(/[^\x20-\x7E]/g, "?"), fallback, field.fontSize, field.width, maxLines);
+    drawLines(fallback, safe.lines, safe.size);
   }
 }
 
@@ -338,26 +425,37 @@ async function drawPassengerTable(
     const y = config.rowBaselines?.[rowOnPage] ?? pageHeight - config.startY - rowOnPage * config.rowHeight - fontSize;
     const passenger = passengers[i];
 
-    const cells: Array<[number | undefined, string | undefined, number | undefined]> = [
-      [config.columns.name, passenger.passenger_name, widths.name],
-      [config.columns.passport, passenger.passport_number, widths.passport],
-      [config.columns.nationality, passenger.nationality, widths.nationality],
+    const cells: Array<[number | undefined, string | undefined, number | undefined, number]> = [
+      [config.columns.name, passenger.passenger_name, widths.name, 2],
+      [config.columns.passport, passenger.passport_number, widths.passport, 1],
+      [config.columns.nationality, passenger.nationality, widths.nationality, 1],
     ];
 
-    for (const [colX, value, maxWidth] of cells) {
+    for (const [colX, value, maxWidth, maxLines] of cells) {
       if (colX === undefined || !value) continue;
-      const fitted = fitTextToWidth(value, font, fontSize, maxWidth ?? 0);
+      const wrapped = wrapToFit(value, font, fontSize, maxWidth ?? 0, maxLines);
+      const lineGap = Math.min(wrapped.size * 1.05, 9.2);
       try {
-        page.drawText(fitted.text, {
-          x: colX,
-          y,
-          size: fitted.size,
-          font,
-          color: rgb(0, 0, 0),
+        wrapped.lines.forEach((line, index) => {
+          page.drawText(line, {
+            x: colX,
+            y: y - index * lineGap,
+            size: wrapped.size,
+            font,
+            color: rgb(0, 0, 0),
+          });
         });
       } catch {
-        const safe = fitTextToWidth(value.replace(/[^\x20-\x7E]/g, "?"), font, fontSize, maxWidth ?? 0);
-        page.drawText(safe.text, { x: colX, y, size: safe.size, font, color: rgb(0, 0, 0) });
+        const safe = wrapToFit(value.replace(/[^\x20-\x7E]/g, "?"), font, fontSize, maxWidth ?? 0, maxLines);
+        safe.lines.forEach((line, index) => {
+          page.drawText(line, {
+            x: colX,
+            y: y - index * lineGap,
+            size: safe.size,
+            font,
+            color: rgb(0, 0, 0),
+          });
+        });
       }
     }
 

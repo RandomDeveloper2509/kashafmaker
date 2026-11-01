@@ -18,6 +18,8 @@ export interface TemplateField {
   type: "text" | "image";
   /** If set, used as pdf-lib Y (origin bottom-left) instead of converting from top-origin `y`. */
   pdfBaseline?: number;
+  /** Wrap onto extra lines instead of truncating with "...". */
+  wrapLines?: number;
 }
 
 export interface PassengerTableConfig {

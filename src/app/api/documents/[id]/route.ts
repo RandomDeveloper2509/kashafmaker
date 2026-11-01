@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, hasPermission } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { readFile, deleteFile } from "@/lib/storage";
+import { pdfContentDisposition } from "@/lib/utils";
 
 async function servePdf(id: string, download: boolean) {
   const document = await prisma.kashafDocument.findUnique({
@@ -51,7 +52,7 @@ async function servePdf(id: string, download: boolean) {
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${document.documentNumber}.pdf"`,
+      "Content-Disposition": pdfContentDisposition(document.documentNumber, download),
       "Cache-Control": "private, max-age=3600",
     },
   });

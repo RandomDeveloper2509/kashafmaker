@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
-import { generateRideNumber, generateDocumentNumber } from "@/lib/utils";
+import { generateRideNumber, generateKashafFileName } from "@/lib/utils";
 import {
   buildKashafContext,
   createDriverSnapshot,
@@ -263,7 +263,18 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
     : (template.fieldConfig as unknown as TemplateFieldConfig);
   const pdfBytes = await generateKashafPdf(template.filePath, fieldConfig, context);
 
-  const documentNumber = generateDocumentNumber();
+  const baseName = generateKashafFileName({
+    companyNameAr: company.nameAr,
+    companyName: company.name,
+    date: ride.date,
+    plateNumber: context.vehicle.plate_number,
+  });
+  let documentNumber = baseName;
+  for (let n = 2; n < 50; n++) {
+    const taken = await prisma.kashafDocument.findUnique({ where: { documentNumber } });
+    if (!taken) break;
+    documentNumber = `${baseName} (${n})`;
+  }
   const filePath = await saveFile("documents", Buffer.from(pdfBytes), `${documentNumber}.pdf`);
 
   const snapshot = {
