@@ -204,6 +204,7 @@ model KashafDocument {
   status         KashafDocumentStatus @default(GENERATED)
   snapshot       Json
   passengerCount Int                  @default(0)
+  pdfData        String?              @db.Text // Store PDF bytes as base64 for permanent storage
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
   ride           Ride                 @relation(fields: [rideId], references: [id], onDelete: Cascade)

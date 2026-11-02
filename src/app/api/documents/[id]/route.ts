@@ -12,7 +12,18 @@ async function servePdf(id: string, download: boolean) {
   if (!document) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   let buffer: Buffer | null = null;
-  if (document.filePath) {
+
+  // First try to get PDF from database (permanent storage)
+  if (document.pdfData) {
+    try {
+      buffer = Buffer.from(document.pdfData, 'base64');
+    } catch {
+      buffer = null;
+    }
+  }
+
+  // If not in database, try to read from disk
+  if (!buffer && document.filePath) {
     try {
       buffer = await readFile(document.filePath);
     } catch {
@@ -20,7 +31,7 @@ async function servePdf(id: string, download: boolean) {
     }
   }
 
-  // Self-healing: if PDF is missing on disk (e.g. serverless recycled /tmp), regenerate from snapshot!
+  // Self-healing: if PDF is missing from both database and disk, regenerate from snapshot!
   if (!buffer && document.snapshot) {
     try {
       const { generateKashafPdf, buildContextFromSnapshot, isNbisStyleTemplate, getNbisKashafFieldConfig } = await import("@/lib/pdf");
@@ -49,6 +60,18 @@ async function servePdf(id: string, download: boolean) {
 
       const pdfBytes = await generateKashafPdf(templateFilePath, fieldConfig as import("@/lib/pdf").TemplateFieldConfig, context);
       buffer = Buffer.from(pdfBytes);
+
+      // Save to database for future use
+      try {
+        await prisma.kashafDocument.update({
+          where: { id },
+          data: { pdfData: buffer.toString('base64') },
+        });
+      } catch {
+        /* ignore database update failure */
+      }
+
+      // Also save to disk as backup
       try {
         const newPath = await saveFile("documents", buffer, `${document.documentNumber}.pdf`);
         await prisma.kashafDocument.update({
@@ -64,7 +87,7 @@ async function servePdf(id: string, download: boolean) {
   }
 
   if (!buffer) {
-    return NextResponse.json({ error: "PDF file is missing on disk" }, { status: 404 });
+    return NextResponse.json({ error: "PDF file is missing" }, { status: 404 });
   }
 
   return new NextResponse(new Uint8Array(buffer), {

@@ -261,6 +261,7 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
   const fieldConfig = isNbisStyleTemplate(template.pageCount)
     ? getNbisKashafFieldConfig()
     : (template.fieldConfig as unknown as TemplateFieldConfig);
+
   const pdfBytes = await generateKashafPdf(template.filePath, fieldConfig, context);
 
   const baseName = generateKashafFileName({
@@ -300,6 +301,7 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
       status: "GENERATED",
       snapshot: snapshot as Prisma.InputJsonValue,
       passengerCount: passengers.length,
+      pdfData: Buffer.from(pdfBytes).toString('base64'), // Store PDF bytes in database
     },
     include: { ride: true, template: true },
   });
