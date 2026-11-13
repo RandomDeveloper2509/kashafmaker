@@ -32,9 +32,9 @@ export function getNbisKashafFieldConfig(): TemplateFieldConfig {
   return {
     coverRects: [],
     fields: [
-      field("p1-date", "date", 1, 422, 170, 92, { fontSize: 11.5, pdfBaseline: 613, align: "center" }),
-      field("p1-pickup", "pickup", 1, 420, 436, 88, { fontSize: 10.5, pdfBaseline: 349, align: "center" }),
-      field("p1-dest", "destination", 1, 166, 433, 78, { fontSize: 10.5, pdfBaseline: 350.5, align: "center" }),
+      field("p1-date", "date", 1, 400, 170, 122, { fontSize: 10.5, pdfBaseline: 614, align: "right" }),
+      field("p1-pickup", "pickup", 1, 330, 436, 182, { fontSize: 10, pdfBaseline: 347.8, align: "right" }),
+      field("p1-dest", "destination", 1, 60, 433, 182, { fontSize: 10, pdfBaseline: 347.8, align: "right" }),
       field("p2-phone", "driver_phone", 2, 36, 158, 90, { fontSize: 10.5, pdfBaseline: 620, align: "center" }),
       field("p2-iqama", "iqama_number", 2, 148, 158, 78, { fontSize: 10.5, pdfBaseline: 620, align: "center" }),
       field("p2-driver", "driver_name", 2, 236, 158, 150, { fontSize: 10.5, pdfBaseline: 620, wrapLines: 2, height: 28, align: "center" }),

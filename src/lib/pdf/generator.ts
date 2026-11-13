@@ -214,7 +214,7 @@ function wrapToFit(
   return { lines: lines.length ? lines : [text], size };
 }
 
-function fitTextToWidth(text: string, font: PDFFont, fontSize: number, maxWidth: number, minSize = Math.max(9.5, fontSize - 0.5)): { text: string; size: number } {
+function fitTextToWidth(text: string, font: PDFFont, fontSize: number, maxWidth: number, minSize = 8): { text: string; size: number } {
   if (!maxWidth || maxWidth <= 0) return { text, size: fontSize };
   let size = fontSize;
   while (size > minSize && font.widthOfTextAtSize(text, size) > maxWidth) {
@@ -543,10 +543,10 @@ export async function generateKashafPdf(
   if (docNumber && pages.length >= 2) {
     const p2 = pages[1];
     try {
-      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-      const arabicFont = await loadFont(pdfDoc, "NotoSansArabic", true, true);
-      const fontSize = 11;
-      const textColor = rgb(0.12, 0.12, 0.12); // Dark bold
+      const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const arabicFont = await loadFont(pdfDoc, "NotoSansArabic", false, true);
+      const fontSize = 10;
+      const textColor = rgb(0.28, 0.28, 0.28); // Same color and weight as page 1 & other fields
 
       // Dynamically position Y right below the last passenger row
       const passengerCount = context.passengers.length;
@@ -558,12 +558,12 @@ export async function generateKashafPdf(
         targetY = lastRowBottom - 18; // Directly below the last row
       }
 
-      // English string (left part): "SXA - 726420261113001685"
+      // English ID string: "SXA - 726420261113001685"
       const idStr = String(docNumber).trim();
-      const idWidth = boldFont.widthOfTextAtSize(idStr, fontSize);
+      const idWidth = helveticaFont.widthOfTextAtSize(idStr, fontSize);
 
-      // Arabic label (right part): ":رقم الكشف" in Presentation Forms B visual order
-      const arabicLabel = "\uFEEC\uFEB4\uFEDA\uFEDF\uFE8D \uFEE2\uFECA\uFEAD :";
+      // Clean Arabic label: "رقم الكشف:"
+      const arabicLabel = "رقم الكشف:";
       const labelWidth = arabicFont.widthOfTextAtSize(arabicLabel, fontSize);
 
       // Total block aligned to right margin of passenger table (x ~ 574)
@@ -571,16 +571,16 @@ export async function generateKashafPdf(
       const totalWidth = idWidth + 6 + labelWidth;
       const startX = rightMargin - totalWidth;
 
-      // Draw English ID in dark bold Helvetica
+      // Draw English ID on the left
       p2.drawText(idStr, {
         x: startX,
         y: targetY,
         size: fontSize,
-        font: boldFont,
+        font: helveticaFont,
         color: textColor,
       });
 
-      // Draw ':رقم الكشف' directly to its right
+      // Draw standard "رقم الكشف:" on the right
       p2.drawText(arabicLabel, {
         x: startX + idWidth + 6,
         y: targetY,
