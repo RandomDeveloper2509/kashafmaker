@@ -543,11 +543,10 @@ export async function generateKashafPdf(
   if (docNumber && pages.length >= 2) {
     const p2 = pages[1];
     try {
-      const font = await loadFont(pdfDoc, "NotoSansArabic", false, true);
-      // Format: "رقم الكشف: SXA - 726420261113001685"
-      const kashafIdText = `رقم الكشف: ${docNumber}`;
-      const fontSize = 10.5;
-      const textWidth = font.widthOfTextAtSize(kashafIdText, fontSize);
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const arabicFont = await loadFont(pdfDoc, "NotoSansArabic", true, true);
+      const fontSize = 11;
+      const textColor = rgb(0.12, 0.12, 0.12); // Dark bold
 
       // Dynamically position Y right below the last passenger row
       const passengerCount = context.passengers.length;
@@ -556,15 +555,38 @@ export async function generateKashafPdf(
       if (tableConfig?.rowBottoms?.length && passengerCount > 0) {
         const lastRowIndex = Math.min(passengerCount - 1, tableConfig.rowBottoms.length - 1);
         const lastRowBottom = tableConfig.rowBottoms[lastRowIndex];
-        targetY = lastRowBottom - 16; // 16 points directly below the table
+        targetY = lastRowBottom - 18; // Directly below the last row
       }
 
-      p2.drawText(kashafIdText, {
-        x: 574 - textWidth, // Right aligned near right edge of the table (x ~ 574)
+      // English string (left part): "SXA - 726420261113001685"
+      const idStr = String(docNumber).trim();
+      const idWidth = boldFont.widthOfTextAtSize(idStr, fontSize);
+
+      // Arabic label (right part): ":رقم الكشف" in Presentation Forms B visual order
+      const arabicLabel = "\uFEEC\uFEB4\uFEDA\uFEDF\uFE8D \uFEE2\uFECA\uFEAD :";
+      const labelWidth = arabicFont.widthOfTextAtSize(arabicLabel, fontSize);
+
+      // Total block aligned to right margin of passenger table (x ~ 574)
+      const rightMargin = 574;
+      const totalWidth = idWidth + 6 + labelWidth;
+      const startX = rightMargin - totalWidth;
+
+      // Draw English ID in dark bold Helvetica
+      p2.drawText(idStr, {
+        x: startX,
         y: targetY,
         size: fontSize,
-        font,
-        color: rgb(0.2, 0.2, 0.2),
+        font: boldFont,
+        color: textColor,
+      });
+
+      // Draw ':رقم الكشف' directly to its right
+      p2.drawText(arabicLabel, {
+        x: startX + idWidth + 6,
+        y: targetY,
+        size: fontSize,
+        font: arabicFont,
+        color: textColor,
       });
     } catch {
       // Fallback

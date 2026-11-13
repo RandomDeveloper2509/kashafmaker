@@ -59,17 +59,17 @@ export function getNbisKashafFieldConfig(): TemplateFieldConfig {
       hideUnusedRows: true,
       textColor: [0.28, 0.28, 0.28], // Professional soft gray as in reference image
       columns: {
-        name: 260,
-        passport: 160,
-        nationality: 25,
+        name: 290,
+        passport: 182,
+        nationality: 22,
       },
       columnWidths: {
         name: 250,
-        passport: 95,
-        nationality: 130,
+        passport: 104,
+        nationality: 156,
       },
       rowBaselines: [
-        479.5, 456.5, 433.4, 410.4, 388.4, 365.4, 342.3, 319.3, 296.2, 273.2, 250.2, 227.1, 204.1, 181.0, 158.0,
+        476.0, 453.0, 430.0, 407.0, 385.0, 362.0, 339.0, 316.0, 293.0, 270.0, 247.0, 224.0, 201.0, 178.0, 155.0,
       ],
       rowBottoms: [
         469.15, 446.11, 423.07, 401.23, 378.19, 355.13, 332.09, 309.05, 286.01, 262.97, 239.93, 216.77, 193.73, 170.66,
