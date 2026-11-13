@@ -283,12 +283,13 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
     date: ride.date,
     plateNumber: context.vehicle.plate_number,
   });
-  let documentNumber = kashafId;
-  const existing = await prisma.kashafDocument.findUnique({ where: { documentNumber } });
-  if (existing) {
-    documentNumber = `${kashafId}-${Date.now().toString().slice(-4)}`;
+  let documentNumber = baseName;
+  for (let n = 2; n < 50; n++) {
+    const taken = await prisma.kashafDocument.findUnique({ where: { documentNumber } });
+    if (!taken) break;
+    documentNumber = `${baseName} (${n})`;
   }
-  const filePath = await saveFile("documents", Buffer.from(pdfBytes), `${baseName}.pdf`);
+  const filePath = await saveFile("documents", Buffer.from(pdfBytes), `${documentNumber}.pdf`);
 
   const snapshot = {
     company: context.company,

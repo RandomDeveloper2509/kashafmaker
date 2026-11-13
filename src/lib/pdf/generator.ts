@@ -453,10 +453,13 @@ async function drawPassengerTable(
       if (colX === undefined || !value) continue;
       const wrapped = wrapToFit(value, font, fontSize, maxWidth ?? 0, maxLines);
       const lineGap = Math.min(wrapped.size * 1.05, 9.2);
+      const boxWidth = maxWidth ?? 0;
       try {
         wrapped.lines.forEach((line, index) => {
+          const textW = font.widthOfTextAtSize(line, wrapped.size);
+          const centeredX = boxWidth > 0 ? colX + (boxWidth - textW) / 2 : colX;
           page.drawText(line, {
-            x: colX,
+            x: centeredX,
             y: y - index * lineGap,
             size: wrapped.size,
             font,
@@ -466,8 +469,10 @@ async function drawPassengerTable(
       } catch {
         const safe = wrapToFit(value.replace(/[^\x20-\x7E]/g, "?"), font, fontSize, maxWidth ?? 0, maxLines);
         safe.lines.forEach((line, index) => {
+          const textW = font.widthOfTextAtSize(line, safe.size);
+          const centeredX = boxWidth > 0 ? colX + (boxWidth - textW) / 2 : colX;
           page.drawText(line, {
-            x: colX,
+            x: centeredX,
             y: y - index * lineGap,
             size: safe.size,
             font,
@@ -533,19 +538,30 @@ export async function generateKashafPdf(
     await drawPassengerTable(pdfDoc, fieldConfig.passengerTable, context.passengers);
   }
 
-  // Draw Kashaf Document ID below passenger table on page 2 (bottom right)
+  // Draw Kashaf Document ID below passenger table on page 2 (bottom right, directly below last row)
   const docNumber = context.ride?.ride_number; // Note: Kashaf document number or generated ID
   if (docNumber && pages.length >= 2) {
     const p2 = pages[1];
     try {
       const font = await loadFont(pdfDoc, "NotoSansArabic", false, true);
-      // Format: "SXA - 726420261113001685 :رقم الكشف"
-      const kashafIdText = `${docNumber} :رقم الكشف`;
-      const fontSize = 10;
+      // Format: "رقم الكشف: SXA - 726420261113001685"
+      const kashafIdText = `رقم الكشف: ${docNumber}`;
+      const fontSize = 10.5;
       const textWidth = font.widthOfTextAtSize(kashafIdText, fontSize);
+
+      // Dynamically position Y right below the last passenger row
+      const passengerCount = context.passengers.length;
+      const tableConfig = fieldConfig.passengerTable;
+      let targetY = 128;
+      if (tableConfig?.rowBottoms?.length && passengerCount > 0) {
+        const lastRowIndex = Math.min(passengerCount - 1, tableConfig.rowBottoms.length - 1);
+        const lastRowBottom = tableConfig.rowBottoms[lastRowIndex];
+        targetY = lastRowBottom - 16; // 16 points directly below the table
+      }
+
       p2.drawText(kashafIdText, {
         x: 574 - textWidth, // Right aligned near right edge of the table (x ~ 574)
-        y: 128,
+        y: targetY,
         size: fontSize,
         font,
         color: rgb(0.2, 0.2, 0.2),
