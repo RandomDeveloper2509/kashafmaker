@@ -47,12 +47,15 @@ const statusDot = (status: string): "success" | "info" | "danger" | "warning" =>
   }
 };
 
+const PAGE_SIZE = 8;
+
 export default function RidesPage() {
   const { toast } = useToast();
   const [rides, setRides] = useState<Ride[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   // Confirm dialog state
@@ -69,6 +72,7 @@ export default function RidesPage() {
       .finally(() => setLoading(false));
   };
 
+  useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter]);
   useEffect(() => { fetchRides(); }, [debouncedSearch, statusFilter]);
 
   const handleConfirmDelete = async () => {
@@ -158,7 +162,12 @@ export default function RidesPage() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              {(() => {
+                const totalPages = Math.ceil(rides.length / PAGE_SIZE);
+                const pageRides = rides.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+                return (
+                  <>
+                    <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/70">
                     <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap w-32">
@@ -191,7 +200,7 @@ export default function RidesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {rides.map((ride) => {
+                  {pageRides.map((ride) => {
                     const kashafDoc = ride.kashafDocuments[0];
                     return (
                       <tr key={ride.id} className="group hover:bg-slate-50/80 transition-colors">
@@ -308,6 +317,48 @@ export default function RidesPage() {
                   })}
                 </tbody>
               </table>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 bg-white">
+                      <p className="text-xs text-slate-500">
+                        Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, rides.length)} of {rides.length} rides
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={page === 1}
+                          onClick={() => setPage((p) => p - 1)}
+                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          ← Prev
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setPage(p)}
+                            className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                              p === page
+                                ? "border-indigo-500 bg-indigo-600 text-white"
+                                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          disabled={page === totalPages}
+                          onClick={() => setPage((p) => p + 1)}
+                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </CardContent>

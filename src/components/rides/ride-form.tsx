@@ -13,6 +13,67 @@ import {
 import { VisaImportButton } from "@/components/passengers/visa-import";
 import { applyVisaFieldsToPassengerForm } from "@/lib/visa/apply-fields";
 
+const LOCATION_SUGGESTIONS = [
+  "Makkah Hotel",
+  "Medinah Hotel",
+  "Medinah Airport",
+  "Jeddah Airport",
+];
+
+function LocationInput({
+  label,
+  placeholder,
+  value,
+  onChange,
+  required,
+}: {
+  label: string;
+  placeholder?: string;
+  value: string;
+  onChange: (val: string) => void;
+  required?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const filtered = LOCATION_SUGGESTIONS.filter(
+    (s) => s.toLowerCase().includes(value.toLowerCase()) && s.toLowerCase() !== value.toLowerCase()
+  );
+  const showDropdown = open && (value.length === 0 || filtered.length > 0);
+
+  return (
+    <div className="relative">
+      <label className="block text-xs font-semibold text-slate-700 mb-1">
+        {label}
+      </label>
+      <input
+        type="text"
+        required={required}
+        placeholder={placeholder}
+        value={value}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+      />
+      {showDropdown && (
+        <ul className="absolute z-30 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+          {(value.length === 0 ? LOCATION_SUGGESTIONS : filtered).map((s) => (
+            <li key={s}>
+              <button
+                type="button"
+                onMouseDown={() => { onChange(s); setOpen(false); }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
+              >
+                <MapPin className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                {s}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 interface Driver {
   id: string;
   name: string;
@@ -341,18 +402,18 @@ export function RideForm({ rideId, initial }: RideFormProps) {
         <CardContent className="p-6 space-y-5">
           {/* Pickup & Destination */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
+            <LocationInput
               label="From Location (Pickup) *"
               placeholder="e.g. King Abdulaziz Airport Terminal 1, Jeddah"
               value={form.pickup}
-              onChange={(e) => setForm({ ...form, pickup: e.target.value })}
+              onChange={(val) => setForm({ ...form, pickup: val })}
               required
             />
-            <Input
+            <LocationInput
               label="To Location (Destination) *"
               placeholder="e.g. Makkah Clock Tower Hotel, Makkah"
               value={form.destination}
-              onChange={(e) => setForm({ ...form, destination: e.target.value })}
+              onChange={(val) => setForm({ ...form, destination: val })}
               required
             />
           </div>
