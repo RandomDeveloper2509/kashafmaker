@@ -80,7 +80,7 @@ export async function aiExtractVisa(input: {
 
     const prompt = `You are an expert immigration document and visa analyzer.
 Analyze this visa, passport, or travel permit document (which may be in English, Arabic, or bilingual, scanned, photographed, or digital).
-Extract the traveler/passenger information into a valid JSON object with exactly these 4 keys:
+Extract the traveler/passenger information into a valid JSON object with exactly these 3 keys:
 
 1. "fullName": The full personal name of the visa holder or passenger in English (e.g. "MOHAMMED KHALID AL-HARBI").
    - NEVER include label prefixes like "The Name", "thename", "Name:", "Holder:", "Applicant:", "Beneficiary:", or "الاسم".
@@ -92,9 +92,6 @@ Extract the traveler/passenger information into a valid JSON object with exactly
 
 3. "nationality": The traveler's nationality or country of citizenship in standard English (e.g. "Saudi Arabia", "Pakistan", "India", "Egypt", "Indonesia", "United Kingdom", "United States", "Bangladesh", "Turkey", "Jordan", "Syria").
    - If written in Arabic (like "باكستان" or "مصر" or "المملكة العربية السعودية"), convert to standard English country name.
-
-4. "visaType": The primary type of visa or purpose of visit (e.g. "Umrah", "Hajj", "Tourism Visit", "Family Visit", "Business Visit", "Work", "Transit", "Personal Visit").
-   - CRITICAL: Do NOT include sponsor names, company names, or Umrah office names (e.g. if the document says "Umrah" and "Umrah Office: Holy Journey", return ONLY "Umrah").
 
 If any field is missing or cannot be found from the document, set its value to an empty string "".`;
 

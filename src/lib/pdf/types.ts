@@ -20,6 +20,8 @@ export interface TemplateField {
   pdfBaseline?: number;
   /** Wrap onto extra lines instead of truncating with "...". */
   wrapLines?: number;
+  /** Text color RGB values between 0 and 1, defaults to black [0, 0, 0] */
+  color?: [number, number, number];
 }
 
 export interface PassengerTableConfig {
@@ -45,6 +47,8 @@ export interface PassengerTableConfig {
     passport?: number;
     nationality?: number;
   };
+  /** Text color RGB values between 0 and 1, e.g. [0.3, 0.3, 0.3] for gray */
+  textColor?: [number, number, number];
   hideUnusedRows?: boolean;
   /** pdf-lib Y of the bottom edge of each passenger data row (index 0 = first passenger). */
   rowBottoms?: number[];
@@ -97,6 +101,7 @@ export interface KashafDataContext {
     pickup?: string;
     destination?: string;
     trip_type?: string;
+    flight_number?: string;
     notes?: string;
   };
   driver: {
@@ -226,7 +231,8 @@ export function resolveFieldValue(field: string, context: KashafDataContext): st
   }
   if (field === "destination") return context.ride.destination || "";
   if (field === "pickup") return context.ride.pickup || "";
-  if (field === "datetime") return context.ride.datetime || `${context.ride.date || ""} ${context.ride.time || ""}`.trim();
+  if (field === "flight_number") return context.ride.flight_number || "";
+  if (field === "datetime") return context.ride.datetime || context.ride.date || "";
 
   return "";
 }

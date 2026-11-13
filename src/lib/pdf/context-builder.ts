@@ -1,5 +1,5 @@
 import { KashafDataContext } from "./types";
-import { formatDate } from "../utils";
+import { formatDateLong } from "../utils";
 
 interface CompanyData {
   name: string;
@@ -40,6 +40,7 @@ interface RideData {
   pickup: string;
   destination: string;
   tripType?: string | null;
+  flightNumber?: string | null;
   notes?: string | null;
 }
 
@@ -73,13 +74,14 @@ export function buildKashafContext(
     },
     ride: {
       ride_number: ride.rideNumber,
-      date: formatDate(ride.date),
+      date: formatDateLong(ride.date),
       time: ride.time,
       pickup: ride.pickup,
       destination: ride.destination,
       trip_type: ride.tripType || undefined,
+      flight_number: ride.flightNumber || undefined,
       notes: (ride.notes && ride.notes.trim()) ? ride.notes : `${ride.pickup} to ${ride.destination}`,
-      datetime: `${formatDate(ride.date)} ${ride.time}`,
+      datetime: formatDateLong(ride.date),
     },
     driver: driver
       ? {

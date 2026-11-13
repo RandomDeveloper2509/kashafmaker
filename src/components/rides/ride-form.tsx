@@ -109,6 +109,7 @@ interface RideFormProps {
     destination: string;
     intermediateStops: string;
     tripType: string;
+    flightNumber?: string;
     notes: string;
     status: string;
     driverId: string;
@@ -152,6 +153,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
     destination: initial?.destination || "",
     intermediateStops: initial?.intermediateStops || "",
     tripType: initial?.tripType || "",
+    flightNumber: initial?.flightNumber || "",
     notes: initial?.notes || "",
     status: initial?.status || "SCHEDULED",
     driverId: initial?.driverId || "",
@@ -418,8 +420,8 @@ export function RideForm({ rideId, initial }: RideFormProps) {
             />
           </div>
 
-          {/* Date, Trip Type, Intermediate Stops */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Date, Visa Type, Flight Number, Intermediate Stops */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <Input
               label="Trip Date *"
               type="date"
@@ -428,10 +430,16 @@ export function RideForm({ rideId, initial }: RideFormProps) {
               required
             />
             <Input
-              label="Trip Type"
-              placeholder="e.g. Umrah Transfer, Airport VIP"
+              label="Visa Type"
+              placeholder="e.g. Umrah, Tourism"
               value={form.tripType}
               onChange={(e) => setForm({ ...form, tripType: e.target.value })}
+            />
+            <Input
+              label="Flight Number (Optional)"
+              placeholder="e.g. SV-738, PK-741"
+              value={form.flightNumber}
+              onChange={(e) => setForm({ ...form, flightNumber: e.target.value })}
             />
             <Input
               label="Intermediate Stops (Optional)"
@@ -609,9 +617,6 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                           </div>
                           <div>
                             <p className="font-semibold text-slate-900 text-sm">{p.fullName}</p>
-                            {p.visaType && (
-                              <p className="text-[11px] text-indigo-600 font-medium">{p.visaType}</p>
-                            )}
                           </div>
                         </div>
                       </td>
@@ -733,13 +738,6 @@ export function RideForm({ rideId, initial }: RideFormProps) {
             placeholder="e.g. Saudi Arabia, Pakistan"
           />
         </div>
-
-        <Input
-          label="Visa Type"
-          value={passengerForm.visaType}
-          onChange={(e) => setPassengerForm({ ...passengerForm, visaType: e.target.value })}
-          placeholder="e.g. Umrah, Tourism"
-        />
 
         <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
           <Button

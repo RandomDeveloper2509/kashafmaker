@@ -14,6 +14,16 @@ export function formatDate(date: Date | string): string {
   });
 }
 
+/** Formats a date as "13 November 2026" (no dashes, full month name) */
+export function formatDateLong(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function formatDateTime(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleString("en-GB", {
@@ -41,6 +51,30 @@ export function generateDocumentNumber(): string {
     .toString()
     .padStart(4, "0");
   return `K-${datePart}-${random}`;
+}
+
+/**
+ * Generates a Kashaf document ID in the format: SXA - {plateDigits}{YYYYMMDD}{seq6}
+ * e.g. "SXA - 726420261113001685"
+ * plate = plate number (letters prefix kept, digits stripped for body)
+ * seq = sequential counter padded to 6 digits (starting at 1700 to leave room for 10k+ docs)
+ */
+export function generateKashafId(options: {
+  plateNumber?: string | null;
+  date: Date;
+  seq: number;
+}): string {
+  const plate = (options.plateNumber || "").trim();
+  // Extract alpha prefix (e.g. "SXA") and numeric digits (e.g. "7264")
+  const alphaPrefix = plate.replace(/[^A-Za-z]/g, "").toUpperCase() || "SXA";
+  const plateDigits = plate.replace(/[^0-9]/g, "");
+  const d = options.date;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const datePart = `${yyyy}${mm}${dd}`;
+  const seqPart = String(options.seq).padStart(6, "0");
+  return `${alphaPrefix} - ${plateDigits}${datePart}${seqPart}`;
 }
 
 /** Kashaf download/display name: كشف الركاب {Arabic company} {dd-mm-yyyy} - {plate} */

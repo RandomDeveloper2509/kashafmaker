@@ -160,17 +160,16 @@ function wrapTextToLines(
     current = chunk;
   };
 
-  // Special handling for 2-line wrapping: split words evenly
+  // Special handling for 2-line wrapping: split words evenly across 2 lines
   if (maxLines === 2 && words.length >= 3) {
-    const midPoint = Math.ceil(words.length / 2);
-    const firstLine = words.slice(0, midPoint).join(" ");
-    const secondLine = words.slice(midPoint).join(" ");
-
-    // Check if both lines fit within maxWidth
-    if (font.widthOfTextAtSize(firstLine, fontSize) <= maxWidth &&
-        font.widthOfTextAtSize(secondLine, fontSize) <= maxWidth) {
-      return [firstLine, secondLine];
+    let bestSplit = Math.ceil(words.length / 2);
+    if (words.length === 4) {
+      bestSplit = 2; // Exact 2 words up, 2 words down
     }
+    const firstLine = words.slice(0, bestSplit).join(" ");
+    const secondLine = words.slice(bestSplit).join(" ");
+
+    return [firstLine, secondLine];
   }
 
   for (const word of words) {
@@ -315,15 +314,17 @@ function drawSpacedText(
   y: number,
   font: PDFFont,
   fontSize: number,
-  letterSpacing: number
+  letterSpacing: number,
+  textColor: [number, number, number] = [0, 0, 0]
 ) {
+  const color = rgb(textColor[0], textColor[1], textColor[2]);
   if (!letterSpacing) {
-    page.drawText(text, { x, y, size: fontSize, font, color: rgb(0, 0, 0) });
+    page.drawText(text, { x, y, size: fontSize, font, color });
     return;
   }
   let cursor = x;
   for (const char of text) {
-    page.drawText(char, { x: cursor, y, size: fontSize, font, color: rgb(0, 0, 0) });
+    page.drawText(char, { x: cursor, y, size: fontSize, font, color });
     cursor += font.widthOfTextAtSize(char, fontSize) + letterSpacing;
   }
 }
@@ -344,11 +345,12 @@ async function drawTextField(
   const pageHeight = page.getHeight();
   const y = field.pdfBaseline ?? pageHeight - field.y - fontSize;
   const lineGap = fontSize * 1.12;
+  const color = field.color || (field.page === 2 ? [0.28, 0.28, 0.28] : [0, 0, 0]);
 
   const drawLines = (drawFont: PDFFont, lines: string[], size: number) => {
     lines.forEach((line, index) => {
       const x = getTextX({ ...field, width: field.width }, line, drawFont, size);
-      drawSpacedText(page, line, x, y - index * lineGap, drawFont, size, field.letterSpacing || 0);
+      drawSpacedText(page, line, x, y - index * lineGap, drawFont, size, field.letterSpacing || 0, color);
     });
   };
 
@@ -444,6 +446,9 @@ async function drawPassengerTable(
       [config.columns.nationality, passenger.nationality, widths.nationality, 1],
     ];
 
+    const textColorRgb = config.textColor || [0.28, 0.28, 0.28];
+    const textColor = rgb(textColorRgb[0], textColorRgb[1], textColorRgb[2]);
+
     for (const [colX, value, maxWidth, maxLines] of cells) {
       if (colX === undefined || !value) continue;
       const wrapped = wrapToFit(value, font, fontSize, maxWidth ?? 0, maxLines);
@@ -455,7 +460,7 @@ async function drawPassengerTable(
             y: y - index * lineGap,
             size: wrapped.size,
             font,
-            color: rgb(0, 0, 0),
+            color: textColor,
           });
         });
       } catch {
@@ -466,7 +471,7 @@ async function drawPassengerTable(
             y: y - index * lineGap,
             size: safe.size,
             font,
-            color: rgb(0, 0, 0),
+            color: textColor,
           });
         });
       }
@@ -526,6 +531,28 @@ export async function generateKashafPdf(
 
   if (fieldConfig.passengerTable && context.passengers.length > 0) {
     await drawPassengerTable(pdfDoc, fieldConfig.passengerTable, context.passengers);
+  }
+
+  // Draw Kashaf Document ID below passenger table on page 2 (bottom right)
+  const docNumber = context.ride?.ride_number; // Note: Kashaf document number or generated ID
+  if (docNumber && pages.length >= 2) {
+    const p2 = pages[1];
+    try {
+      const font = await loadFont(pdfDoc, "NotoSansArabic", false, true);
+      // Format: "SXA - 726420261113001685 :رقم الكشف"
+      const kashafIdText = `${docNumber} :رقم الكشف`;
+      const fontSize = 10;
+      const textWidth = font.widthOfTextAtSize(kashafIdText, fontSize);
+      p2.drawText(kashafIdText, {
+        x: 574 - textWidth, // Right aligned near right edge of the table (x ~ 574)
+        y: 128,
+        size: fontSize,
+        font,
+        color: rgb(0.2, 0.2, 0.2),
+      });
+    } catch {
+      // Fallback
+    }
   }
 
   return pdfDoc.save();

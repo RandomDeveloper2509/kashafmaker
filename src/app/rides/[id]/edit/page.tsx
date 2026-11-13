@@ -57,6 +57,7 @@ export default function EditRidePage() {
     destination: string;
     intermediateStops: string | null;
     tripType: string | null;
+    flightNumber: string | null;
     notes: string | null;
     status: string;
     driverId: string | null;
@@ -84,6 +85,7 @@ export default function EditRidePage() {
           destination: data.destination,
           intermediateStops: data.intermediateStops || "",
           tripType: data.tripType || "",
+          flightNumber: data.flightNumber || "",
           notes: data.notes || "",
           status: data.status,
           driverId: data.driverId || "",

@@ -17,7 +17,6 @@ const FIELD_META: Array<{ key: VisaFieldKey; label: string }> = [
   { key: "fullName", label: "Full Name" },
   { key: "passportNumber", label: "Passport Number" },
   { key: "nationality", label: "Nationality" },
-  { key: "visaType", label: "Visa Type" },
 ];
 
 const EMPTY_DRAFT: PassengerVisaFields = {

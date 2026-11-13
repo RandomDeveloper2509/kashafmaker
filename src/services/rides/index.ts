@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
-import { generateRideNumber, generateKashafFileName } from "@/lib/utils";
+import { generateRideNumber, generateKashafFileName, generateKashafId } from "@/lib/utils";
 import {
   buildKashafContext,
   createDriverSnapshot,
@@ -62,6 +62,7 @@ export async function createRide(data: RideInput) {
       destination: data.destination,
       intermediateStops: data.intermediateStops,
       tripType: data.tripType,
+      flightNumber: data.flightNumber,
       notes: data.notes,
       status: data.status,
       driverId: data.driverId || null,
@@ -121,6 +122,7 @@ export async function updateRide(id: string, data: RideInput) {
       destination: data.destination,
       intermediateStops: data.intermediateStops,
       tripType: data.tripType,
+      flightNumber: data.flightNumber,
       notes: data.notes,
       status: data.status,
       driverId: data.driverId || null,
@@ -258,6 +260,17 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
     passengers
   );
 
+  // Generate Kashaf ID formatted as: SXA - 726420261113001685
+  const docCount = await prisma.kashafDocument.count();
+  const kashafId = generateKashafId({
+    plateNumber: vehicleSnap?.plateNumber as string | undefined,
+    date: ride.date,
+    seq: 1700 + docCount,
+  });
+
+  // Inject kashafId into context.ride.ride_number so the generator prints it at bottom right
+  context.ride.ride_number = kashafId;
+
   const fieldConfig = isNbisStyleTemplate(template.pageCount)
     ? getNbisKashafFieldConfig()
     : (template.fieldConfig as unknown as TemplateFieldConfig);
@@ -270,13 +283,12 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
     date: ride.date,
     plateNumber: context.vehicle.plate_number,
   });
-  let documentNumber = baseName;
-  for (let n = 2; n < 50; n++) {
-    const taken = await prisma.kashafDocument.findUnique({ where: { documentNumber } });
-    if (!taken) break;
-    documentNumber = `${baseName} (${n})`;
+  let documentNumber = kashafId;
+  const existing = await prisma.kashafDocument.findUnique({ where: { documentNumber } });
+  if (existing) {
+    documentNumber = `${kashafId}-${Date.now().toString().slice(-4)}`;
   }
-  const filePath = await saveFile("documents", Buffer.from(pdfBytes), `${documentNumber}.pdf`);
+  const filePath = await saveFile("documents", Buffer.from(pdfBytes), `${baseName}.pdf`);
 
   const snapshot = {
     company: context.company,
