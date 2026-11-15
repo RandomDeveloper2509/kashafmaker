@@ -667,6 +667,6 @@ export function getSampleContext(): KashafDataContext {
         visa_type: "Umrah",
       },
     ],
-    third_party: "Mansoor Ahmed and 2 members",
+    third_party: "Mansoor Ahmed and 2 Members",
   };
 }

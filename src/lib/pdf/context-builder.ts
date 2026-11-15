@@ -113,7 +113,7 @@ export function buildKashafContext(
       visa_type: p.visaType || undefined,
     })),
     third_party: passengers.length > 0 
-      ? `${passengers[0].fullName}${passengers.length > 1 ? ` and ${passengers.length - 1} members` : ''}`
+      ? `${passengers[0].fullName}${passengers.length > 1 ? ` and ${passengers.length - 1} Members` : ''}`
       : undefined,
   };
 }
