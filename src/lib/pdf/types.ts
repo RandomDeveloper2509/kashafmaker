@@ -224,7 +224,7 @@ export function resolveFieldValue(field: string, context: KashafDataContext): st
     if (context.third_party) return context.third_party;
     if (context.passengers && context.passengers.length > 0) {
       const first = context.passengers[0].passenger_name || "";
-      const others = context.passengers.length > 1 ? ` and ${context.passengers.length - 1} others` : "";
+      const others = context.passengers.length > 1 ? ` and ${context.passengers.length - 1} members` : "";
       return `${first}${others}`;
     }
     return "";
@@ -243,7 +243,7 @@ export function buildContextFromSnapshot(snapshot: Record<string, unknown>): Kas
     typeof snapshot.third_party === "string"
       ? snapshot.third_party
       : passengers.length > 0
-        ? `${passengers[0]?.passenger_name || ""}${passengers.length > 1 ? ` and ${passengers.length - 1} others` : ""}`
+        ? `${passengers[0]?.passenger_name || ""}${passengers.length > 1 ? ` and ${passengers.length - 1} members` : ""}`
         : undefined;
 
   return {

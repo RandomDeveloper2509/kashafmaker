@@ -64,6 +64,7 @@ async function loadFont(
     Arial: bold ? "Helvetica-Bold" : "Helvetica",
     Times: bold ? "Times-Bold" : "Times-Roman",
     Courier: bold ? "Courier-Bold" : "Courier",
+    Calibri: bold ? "calibrib.ttf" : "calibri.ttf",
     NotoSansArabic: "NotoSansArabic-Regular.ttf",
   };
 
@@ -666,6 +667,6 @@ export function getSampleContext(): KashafDataContext {
         visa_type: "Umrah",
       },
     ],
-    third_party: "Mansoor Ahmed and 2 others",
+    third_party: "Mansoor Ahmed and 2 members",
   };
 }
