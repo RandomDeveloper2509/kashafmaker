@@ -66,13 +66,19 @@ async function loadFont(
     Times: bold ? "Times-Bold" : "Times-Roman",
     Courier: bold ? "Courier-Bold" : "Courier",
     Calibri: bold ? "calibrib.ttf" : "calibri.ttf",
-    NotoSansArabic: bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf",
-    Tajawal: bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf",
+    NotoSansArabic: bold ? "Cairo-Bold.woff" : "Cairo-Regular.woff",
+    Tajawal: bold ? "Cairo-Bold.woff" : "Cairo-Regular.woff",
+    Cairo: bold ? "Cairo-Bold.woff" : "Cairo-Regular.woff",
   };
 
   if (forArabic) {
-    const fontFile = bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf";
+    // Cairo 600/700 woff: pre-composed glyphs (no GPOS offsets), good weight
+    const fontFile = bold ? "Cairo-Bold.woff" : "Cairo-Regular.woff";
     let fontBytes = await readFontBytes(fontFile);
+    if (!fontBytes) {
+      // fallback chain: Tajawal → NotoSansArabic
+      fontBytes = await readFontBytes(bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf");
+    }
     if (!fontBytes) {
       fontBytes = await readFontBytes(bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf");
     }
@@ -87,7 +93,7 @@ async function loadFont(
 
   const mapped = fontMap[fontFamily] || fontMap["Helvetica"];
 
-  if (mapped.endsWith(".ttf")) {
+  if (mapped.endsWith(".ttf") || mapped.endsWith(".woff") || mapped.endsWith(".woff2")) {
     const fontBytes = await readFontBytes(mapped);
     if (fontBytes) {
       try {
@@ -506,8 +512,22 @@ async function drawPage1Contract(
   const rightMargin = 566;
   const pageWidth = page.getWidth();
 
-  const fixArabicNumbers = (text: string) =>
-    text.replace(/[\u0660-\u0669]+/g, (match) => match.split("").reverse().join(""));
+  // Fix Arabic-Indic numbers for RTL rendering in pdf-lib (no BiDi engine):
+  // 1) For (DIGITS) groups: swap parens AND reverse digits so visual output is correct
+  // 2) For standalone digit runs (2+ digits): reverse their order
+  const fixArabicNumbers = (text: string) => {
+    // Step 1: handle (٣٩) → )٩٣( so pdf-lib renders it as (٣٩) visually
+    let result = text.replace(
+      /\(([\u0660-\u0669]+)\)/g,
+      (_match, digits: string) => ")" + digits.split("").reverse().join("") + "("
+    );
+    // Step 2: reverse standalone digit runs (not already inside swapped parens)
+    result = result.replace(
+      /(?<!\()([\u0660-\u0669]{2,})(?!\))/g,
+      (match) => match.split("").reverse().join("")
+    );
+    return result;
+  };
 
   const drawRTL = (text: string, y: number, fontSize = 12, font = regularFont) => {
     const fixed = fixArabicNumbers(text);
