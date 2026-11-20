@@ -66,16 +66,16 @@ async function loadFont(
     Times: bold ? "Times-Bold" : "Times-Roman",
     Courier: bold ? "Courier-Bold" : "Courier",
     Calibri: bold ? "calibrib.ttf" : "calibri.ttf",
-    NotoSansArabic: bold ? "Tajawal-Bold.ttf" : "Tajawal-Bold.ttf",
-    Tajawal: bold ? "Tajawal-Bold.ttf" : "Tajawal-Bold.ttf",
+    NotoSansArabic: bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf",
+    Tajawal: bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf",
   };
 
   if (forArabic) {
-    // Always use Tajawal-Bold for Arabic — pre-composed glyphs (no floating dots) + heavier weight
-    const fontFile = "Tajawal-Bold.ttf";
+    // Use NotoSansArabic-Bold for all Arabic text — matches user's target font + dark appearance
+    const fontFile = "NotoSansArabic-Bold.ttf";
     let fontBytes = await readFontBytes(fontFile);
     if (!fontBytes) {
-      fontBytes = await readFontBytes("NotoSansArabic-Bold.ttf");
+      fontBytes = await readFontBytes("NotoSansArabic-Regular.ttf");
     }
     if (fontBytes) {
       try {
