@@ -64,6 +64,8 @@ export const rideSchema = z.object({
   intermediateStops: z.string().optional(),
   tripType: z.string().optional(),
   flightNumber: z.string().optional(),
+  fare: z.number().nullable().optional(),
+  referral: z.string().nullable().optional(),
   notes: z.string().optional(),
   status: z.enum(["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).default("SCHEDULED"),
   driverId: z.string().optional(),

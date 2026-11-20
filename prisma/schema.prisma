@@ -149,6 +149,8 @@ model Ride {
   intermediateStops String?
   tripType        String?
   flightNumber    String?
+  fare            Float?
+  referral        String?
   notes           String?
   status          RideStatus     @default(SCHEDULED)
   driverId        String?

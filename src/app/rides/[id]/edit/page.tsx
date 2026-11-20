@@ -62,6 +62,8 @@ export default function EditRidePage() {
     status: string;
     driverId: string | null;
     vehicleId: string | null;
+    fare: number | null;
+    referral: string | null;
     passengers: Array<{
       passenger: {
         id: string;
@@ -90,6 +92,8 @@ export default function EditRidePage() {
           status: data.status,
           driverId: data.driverId || "",
           vehicleId: data.vehicleId || "",
+          fare: data.fare,
+          referral: data.referral || "",
           passengers: data.passengers.map((rp) => rp.passenger),
         }}
       />

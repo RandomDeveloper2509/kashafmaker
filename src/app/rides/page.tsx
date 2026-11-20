@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
-  PageHeader, Card, CardContent, Badge, EmptyState, LoadingSpinner, ConfirmDialog, StatusDot,
+  PageHeader, Card, CardContent, Badge, EmptyState, LoadingSpinner, ConfirmDialog, StatusDot, Modal,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import {
-  Plus, Search, MapPin, Users, Car, ArrowRight, FileText, Trash2, Edit, Download,
+  Plus, Search, MapPin, Users, Car, ArrowRight, FileText, Trash2, Edit, Download, FileSpreadsheet,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -62,6 +62,15 @@ export default function RidesPage() {
   const [confirmDelete, setConfirmDelete] = useState<{ type: "ride" | "kashaf"; id: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Excel Export state
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  });
+  const [exportEndDate, setExportEndDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [isExporting, setIsExporting] = useState(false);
+
   const fetchRides = () => {
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("q", debouncedSearch);
@@ -98,17 +107,61 @@ export default function RidesPage() {
     }
   };
 
+  const handleExport = async () => {
+    if (!exportStartDate || !exportEndDate) {
+      toast("Please select both Start Date and End Date", "error");
+      return;
+    }
+    if (exportStartDate > exportEndDate) {
+      toast("Start date cannot be after End date", "error");
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/rides/export?startDate=${exportStartDate}&endDate=${exportEndDate}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to export Excel file");
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Rihal_Next_Rides_${exportStartDate}_to_${exportEndDate}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast("Excel report exported successfully!", "success");
+      setExportModalOpen(false);
+    } catch (error: any) {
+      toast(error?.message || "Failed to export report", "error");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <AppLayout>
       <PageHeader
         title="Rides"
         description="Manage all transport rides and trips"
         action={
-          <Link href="/rides/new">
-            <Button>
-              <Plus className="h-4 w-4" /> Create Ride
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setExportModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 transition-colors shadow-sm"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              <span>Export to Excel</span>
+            </button>
+            <Link href="/rides/new">
+              <Button>
+                <Plus className="h-4 w-4" /> Create Ride
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -376,6 +429,129 @@ export default function RidesPage() {
             : "This will permanently delete the generated Kashaf PDF. You can regenerate it later."
         }
       />
+
+      {/* Export to Excel Date Range Modal */}
+      <Modal
+        open={exportModalOpen}
+        onClose={() => !isExporting && setExportModalOpen(false)}
+        title="Export Rides to Excel"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500">
+            Select the date range of rides to export. The downloaded Excel sheet will include Kashaf ID, Date, Destination, Driver, Vehicle, Fare, and Referral with an automated fare total formula.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Date From
+              </label>
+              <input
+                type="date"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Date To
+              </label>
+              <input
+                type="date"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              />
+            </div>
+          </div>
+
+          {/* Quick presets */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[11px] font-medium text-slate-400">Quick:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                const d = now.toISOString().slice(0, 10);
+                setExportStartDate(d);
+                setExportEndDate(d);
+              }}
+              className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - 7);
+                setExportStartDate(start.toISOString().slice(0, 10));
+                setExportEndDate(end.toISOString().slice(0, 10));
+              }}
+              className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+            >
+              Last 7 Days
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                const first = new Date(now.getFullYear(), now.getMonth(), 1);
+                setExportStartDate(first.toISOString().slice(0, 10));
+                setExportEndDate(now.toISOString().slice(0, 10));
+              }}
+              className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+            >
+              This Month
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                const end = new Date(now.getFullYear(), now.getMonth(), 0);
+                const start = new Date(end.getFullYear(), end.getMonth(), 1);
+                setExportStartDate(start.toISOString().slice(0, 10));
+                setExportEndDate(end.toISOString().slice(0, 10));
+              }}
+              className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+            >
+              Last Month
+            </button>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              disabled={isExporting}
+              onClick={() => setExportModalOpen(false)}
+              className="rounded-lg border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isExporting}
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
+            >
+              {isExporting ? (
+                <>
+                  <LoadingSpinner />
+                  <span>Exporting…</span>
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span>Export Excel</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </AppLayout>
   );
 }

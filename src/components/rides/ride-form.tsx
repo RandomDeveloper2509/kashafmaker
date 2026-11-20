@@ -114,6 +114,8 @@ interface RideFormProps {
     status: string;
     driverId: string;
     vehicleId: string;
+    fare?: number | null;
+    referral?: string | null;
     passengers: Passenger[];
   };
 }
@@ -158,6 +160,8 @@ export function RideForm({ rideId, initial }: RideFormProps) {
     status: initial?.status || "SCHEDULED",
     driverId: initial?.driverId || "",
     vehicleId: initial?.vehicleId || "",
+    fare: initial?.fare != null ? String(initial.fare) : "",
+    referral: initial?.referral || "",
   });
 
   useEffect(() => {
@@ -362,6 +366,8 @@ export function RideForm({ rideId, initial }: RideFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          fare: form.fare ? parseFloat(form.fare) : null,
+          referral: form.referral || null,
           passengerIds: selectedPassengers.map((p) => p.id),
         }),
       });
@@ -486,6 +492,56 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                   ✓ Driver auto-selected from vehicle assignment
                 </p>
               )}
+            </div>
+          </div>
+
+          {/* Fare & Referral (Private / Saved on Ride, not on Kashaf) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+            <div>
+              <Input
+                label="Fare / Price (SAR)"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 500"
+                value={form.fare}
+                onChange={(e) => setForm({ ...form, fare: e.target.value })}
+              />
+              <p className="mt-1 text-[11px] text-slate-400">
+                Ride price in SAR (saved with ride and used in Excel export; not shown on Kashaf PDF)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Referral
+              </label>
+              <select
+                value={form.referral}
+                onChange={(e) => setForm({ ...form, referral: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              >
+                <option value="">Select referral source...</option>
+                <optgroup label="System Referral Channels">
+                  <option value="NBT-ONLINE">NBT-ONLINE</option>
+                  <option value="NBT-Abdullah">NBT-Abdullah</option>
+                  <option value="NBT-QariSahab">NBT-QariSahab</option>
+                  <option value="NBT-AliNoor">NBT-AliNoor</option>
+                  <option value="NBT-RTG">NBT-RTG</option>
+                  <option value="NBT-PanjKash">NBT-PanjKash</option>
+                  <option value="HarmainGo">HarmainGo</option>
+                  <option value="NBT-NoorUlHaram">NBT-NoorUlHaram</option>
+                </optgroup>
+                <optgroup label="Driver Referrals">
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Referral channel or driver who referred this ride
+              </p>
             </div>
           </div>
 
