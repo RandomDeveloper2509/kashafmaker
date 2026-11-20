@@ -66,16 +66,15 @@ async function loadFont(
     Times: bold ? "Times-Bold" : "Times-Roman",
     Courier: bold ? "Courier-Bold" : "Courier",
     Calibri: bold ? "calibrib.ttf" : "calibri.ttf",
-    NotoSansArabic: bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf",
-    Tajawal: bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf",
+    NotoSansArabic: bold ? "Tajawal-Bold.ttf" : "Tajawal-Medium.ttf",
+    Tajawal: bold ? "Tajawal-Bold.ttf" : "Tajawal-Medium.ttf",
   };
 
   if (forArabic) {
-    // Use NotoSansArabic-Bold for all Arabic text — matches user's target font + dark appearance
-    const fontFile = "NotoSansArabic-Bold.ttf";
+    const fontFile = bold ? "Tajawal-Bold.ttf" : "Tajawal-Medium.ttf";
     let fontBytes = await readFontBytes(fontFile);
     if (!fontBytes) {
-      fontBytes = await readFontBytes("NotoSansArabic-Regular.ttf");
+      fontBytes = await readFontBytes(bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf");
     }
     if (fontBytes) {
       try {
@@ -502,29 +501,18 @@ async function drawPage1Contract(
   const regularFont = await loadFont(pdfDoc, "NotoSansArabic", false, true);
   const boldFont = await loadFont(pdfDoc, "NotoSansArabic", true, true);
 
-  const color = rgb(0, 0, 0); // Deep solid black matching reference photo
+  const color = rgb(0, 0, 0);
 
   const rightMargin = 566;
   const pageWidth = page.getWidth();
 
-  // Fix Arabic-Indic numbers for RTL rendering in pdf-lib (no BiDi engine):
-  // 1) For (DIGITS) groups: swap parens AND reverse digits so visual output is correct
-  // 2) For standalone digit runs (2+ digits): reverse their order
-  const fixArabicNumbers = (text: string) => {
-    // Step 1: handle (٣٩) → )٩٣( so pdf-lib renders it as (٣٩) visually
-    let result = text.replace(
-      /\(([\u0660-\u0669]+)\)/g,
-      (_match, digits: string) => ")" + digits.split("").reverse().join("") + "("
-    );
-    // Step 2: reverse standalone digit runs (not already inside swapped parens)
-    result = result.replace(
-      /(?<!\()([\u0660-\u0669]{2,})(?!\))/g,
-      (match) => match.split("").reverse().join("")
-    );
-    return result;
-  };
+  // Reverse Arabic-Indic digit runs so that RTL text flow displays them
+  // in standard visual order (most significant digit on left).
+  // Brackets are left untouched so they wrap numbers correctly: (٣٩)
+  const fixArabicNumbers = (text: string) =>
+    text.replace(/[\u0660-\u0669]+/g, (match) => match.split("").reverse().join(""));
 
-  const drawRTL = (text: string, y: number, fontSize = 12, font = boldFont) => {
+  const drawRTL = (text: string, y: number, fontSize = 12, font = regularFont) => {
     const fixed = fixArabicNumbers(text);
     const w = font.widthOfTextAtSize(fixed, fontSize);
     page.drawText(fixed, { x: rightMargin - w, y, size: fontSize, font, color });
@@ -552,13 +540,13 @@ async function drawPage1Contract(
     if (value) {
       const fixedVal = fixArabicNumbers(value);
       let valSize = fontSize;
-      let valW = boldFont.widthOfTextAtSize(fixedVal, valSize);
+      let valW = regularFont.widthOfTextAtSize(fixedVal, valSize);
       while (valSize > 8.5 && valW > maxValWidth) {
         valSize -= 0.5;
-        valW = boldFont.widthOfTextAtSize(fixedVal, valSize);
+        valW = regularFont.widthOfTextAtSize(fixedVal, valSize);
       }
       const valX = labelX - 8 - valW;
-      page.drawText(fixedVal, { x: valX, y, size: valSize, font: boldFont, color });
+      page.drawText(fixedVal, { x: valX, y, size: valSize, font: regularFont, color });
     }
   };
 
