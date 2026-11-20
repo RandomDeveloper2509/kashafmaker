@@ -66,21 +66,16 @@ async function loadFont(
     Times: bold ? "Times-Bold" : "Times-Roman",
     Courier: bold ? "Courier-Bold" : "Courier",
     Calibri: bold ? "calibrib.ttf" : "calibri.ttf",
-    NotoSansArabic: bold ? "Cairo-Bold.woff" : "Cairo-Regular.woff",
-    Tajawal: bold ? "Cairo-Bold.woff" : "Cairo-Regular.woff",
-    Cairo: bold ? "Cairo-Bold.woff" : "Cairo-Regular.woff",
+    NotoSansArabic: bold ? "Tajawal-Bold.ttf" : "Tajawal-Bold.ttf",
+    Tajawal: bold ? "Tajawal-Bold.ttf" : "Tajawal-Bold.ttf",
   };
 
   if (forArabic) {
-    // Cairo 600/700 woff: pre-composed glyphs (no GPOS offsets), good weight
-    const fontFile = bold ? "Cairo-Bold.woff" : "Cairo-Regular.woff";
+    // Always use Tajawal-Bold for Arabic — pre-composed glyphs (no floating dots) + heavier weight
+    const fontFile = "Tajawal-Bold.ttf";
     let fontBytes = await readFontBytes(fontFile);
     if (!fontBytes) {
-      // fallback chain: Tajawal → NotoSansArabic
-      fontBytes = await readFontBytes(bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf");
-    }
-    if (!fontBytes) {
-      fontBytes = await readFontBytes(bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf");
+      fontBytes = await readFontBytes("NotoSansArabic-Bold.ttf");
     }
     if (fontBytes) {
       try {
@@ -93,7 +88,7 @@ async function loadFont(
 
   const mapped = fontMap[fontFamily] || fontMap["Helvetica"];
 
-  if (mapped.endsWith(".ttf") || mapped.endsWith(".woff") || mapped.endsWith(".woff2")) {
+  if (mapped.endsWith(".ttf")) {
     const fontBytes = await readFontBytes(mapped);
     if (fontBytes) {
       try {
@@ -529,7 +524,7 @@ async function drawPage1Contract(
     return result;
   };
 
-  const drawRTL = (text: string, y: number, fontSize = 12, font = regularFont) => {
+  const drawRTL = (text: string, y: number, fontSize = 12, font = boldFont) => {
     const fixed = fixArabicNumbers(text);
     const w = font.widthOfTextAtSize(fixed, fontSize);
     page.drawText(fixed, { x: rightMargin - w, y, size: fontSize, font, color });
@@ -550,20 +545,20 @@ async function drawPage1Contract(
     fontSize = 12
   ) => {
     const fixedLabel = fixArabicNumbers(label);
-    const labelW = regularFont.widthOfTextAtSize(fixedLabel, fontSize);
+    const labelW = boldFont.widthOfTextAtSize(fixedLabel, fontSize);
     const labelX = startX - labelW;
-    page.drawText(fixedLabel, { x: labelX, y, size: fontSize, font: regularFont, color });
+    page.drawText(fixedLabel, { x: labelX, y, size: fontSize, font: boldFont, color });
 
     if (value) {
       const fixedVal = fixArabicNumbers(value);
       let valSize = fontSize;
-      let valW = regularFont.widthOfTextAtSize(fixedVal, valSize);
+      let valW = boldFont.widthOfTextAtSize(fixedVal, valSize);
       while (valSize > 8.5 && valW > maxValWidth) {
         valSize -= 0.5;
-        valW = regularFont.widthOfTextAtSize(fixedVal, valSize);
+        valW = boldFont.widthOfTextAtSize(fixedVal, valSize);
       }
       const valX = labelX - 8 - valW;
-      page.drawText(fixedVal, { x: valX, y, size: valSize, font: regularFont, color });
+      page.drawText(fixedVal, { x: valX, y, size: valSize, font: boldFont, color });
     }
   };
 
