@@ -39,13 +39,15 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       <div className="hidden w-1/2 bg-indigo-600 lg:flex lg:flex-col lg:justify-center lg:px-16">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-            <Car className="h-7 w-7 text-white" />
-          </div>
+        <div className="flex items-center gap-4 mb-8">
+          <img
+            src="/logo.png"
+            alt="Rihal Next"
+            className="h-16 w-16 object-contain rounded-full bg-white p-1 shadow-md"
+          />
           <div>
-            <h1 className="text-3xl font-bold text-white">Kashafmaker</h1>
-            <p className="text-indigo-200">Transport Management System</p>
+            <h1 className="text-3xl font-bold text-white">Rihal Next</h1>
+            <p className="text-indigo-200 text-sm font-medium">Smarter Journeys. Seamless Operations.</p>
           </div>
         </div>
         <h2 className="text-4xl font-bold text-white leading-tight">
@@ -59,10 +61,15 @@ export default function LoginPage() {
       <div className="flex w-full flex-col justify-center px-8 lg:w-1/2 lg:px-16">
         <div className="mx-auto w-full max-w-md">
           <div className="mb-8 lg:hidden flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
-              <Car className="h-5 w-5 text-white" />
+            <img
+              src="/logo.png"
+              alt="Rihal Next"
+              className="h-12 w-12 object-contain rounded-full shadow-sm"
+            />
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 leading-tight">Rihal Next</h1>
+              <p className="text-xs text-slate-400 font-medium">Smarter Journeys. Seamless Operations.</p>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Kashafmaker</h1>
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900">Sign in</h2>

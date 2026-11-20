@@ -10,8 +10,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Kashafmaker - Transport Management",
-  description: "Transport management and Kashaf PDF generation system",
+  title: "Rihal Next - Smarter Journeys. Seamless Operations.",
+  description: "Smarter Journeys. Seamless Operations.",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

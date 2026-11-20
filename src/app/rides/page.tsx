@@ -192,7 +192,7 @@ export default function RidesPage() {
                       Status
                     </th>
                     <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell whitespace-nowrap w-40">
-                      Kashafmaker
+                      Kashaf Document
                     </th>
                     <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide sticky right-0 bg-slate-50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10 w-44">
                       Actions

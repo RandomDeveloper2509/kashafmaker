@@ -78,15 +78,17 @@ export function Sidebar({ userName }: { userName?: string }) {
       {/* Logo */}
       <Link
         href="/dashboard"
-        className="flex h-16 shrink-0 items-center gap-3 px-5 border-b border-slate-100"
+        className="flex h-16 shrink-0 items-center gap-3 px-4 border-b border-slate-100"
         onClick={() => setMobileOpen(false)}
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 shadow-sm">
-          <Car className="h-4 w-4 text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-slate-900 leading-tight">KashafMake</p>
-          <p className="text-[10px] text-slate-400 font-medium">Transport Management</p>
+        <img
+          src="/logo.png"
+          alt="Rihal Next Logo"
+          className="h-10 w-10 object-contain rounded-full shadow-sm"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-slate-900 leading-tight truncate">Rihal Next</p>
+          <p className="text-[9px] text-slate-400 font-medium leading-tight truncate">Smarter Journeys. Seamless Operations.</p>
         </div>
       </Link>
 
