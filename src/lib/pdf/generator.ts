@@ -66,16 +66,13 @@ async function loadFont(
     Times: bold ? "Times-Bold" : "Times-Roman",
     Courier: bold ? "Courier-Bold" : "Courier",
     Calibri: bold ? "calibrib.ttf" : "calibri.ttf",
-    NotoSansArabic: bold ? "Tajawal-Bold.ttf" : "Tajawal-Medium.ttf",
-    Tajawal: bold ? "Tajawal-Bold.ttf" : "Tajawal-Medium.ttf",
+    NotoSansArabic: bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf",
+    Tajawal: bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf",
   };
 
   if (forArabic) {
-    const fontFile = bold ? "Tajawal-Bold.ttf" : "Tajawal-Medium.ttf";
-    let fontBytes = await readFontBytes(fontFile);
-    if (!fontBytes) {
-      fontBytes = await readFontBytes(bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf");
-    }
+    const fontFile = bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf";
+    const fontBytes = await readFontBytes(fontFile);
     if (fontBytes) {
       try {
         return await pdfDoc.embedFont(fontBytes, { subset: true });
@@ -533,9 +530,9 @@ async function drawPage1Contract(
     fontSize = 12
   ) => {
     const fixedLabel = fixArabicNumbers(label);
-    const labelW = boldFont.widthOfTextAtSize(fixedLabel, fontSize);
+    const labelW = regularFont.widthOfTextAtSize(fixedLabel, fontSize);
     const labelX = startX - labelW;
-    page.drawText(fixedLabel, { x: labelX, y, size: fontSize, font: boldFont, color });
+    page.drawText(fixedLabel, { x: labelX, y, size: fontSize, font: regularFont, color });
 
     if (value) {
       const fixedVal = fixArabicNumbers(value);
