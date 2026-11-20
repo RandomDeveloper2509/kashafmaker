@@ -5,6 +5,9 @@
   StandardFonts,
   PDFFont,
   PDFPage,
+  PDFOperator,
+  PDFNumber,
+  PDFHexString,
   pushGraphicsState,
   popGraphicsState,
   rectangle,
@@ -509,16 +512,73 @@ async function drawPage1Contract(
   const fixArabicNumbers = (text: string) =>
     text.replace(/[\u0660-\u0669]+/g, (match) => match.split("").reverse().join(""));
 
+  const drawTextWithGPOS = (
+    text: string,
+    startX: number,
+    startY: number,
+    size: number,
+    font: PDFFont,
+    textColor = color
+  ) => {
+    if (!text) return;
+    page.setFont(font);
+    const fontKey = (page as any).fontKey;
+    const embedderFont = (font as any).embedder?.font;
+    if (!embedderFont) {
+      page.drawText(text, { x: startX, y: startY, size, font, color: textColor });
+      return;
+    }
+
+    const scale = size / 1000;
+    const run = embedderFont.layout(text);
+    const hex: string = (font.encodeText(text) as any).value;
+
+    const ops: PDFOperator[] = [
+      PDFOperator.of("q" as any),
+      PDFOperator.of("BT" as any),
+      PDFOperator.of("Tf" as any, [fontKey, PDFNumber.of(size)]),
+      PDFOperator.of("rg" as any, [
+        PDFNumber.of((textColor as any).red ?? 0),
+        PDFNumber.of((textColor as any).green ?? 0),
+        PDFNumber.of((textColor as any).blue ?? 0),
+      ]),
+    ];
+
+    let curX = 0;
+    for (let i = 0; i < run.glyphs.length; i++) {
+      const p = run.positions[i];
+      const gx = startX + curX + p.xOffset * scale;
+      const gy = startY + p.yOffset * scale;
+      const gHex = hex.slice(i * 4, i * 4 + 4);
+
+      ops.push(
+        PDFOperator.of("Tm" as any, [
+          PDFNumber.of(1),
+          PDFNumber.of(0),
+          PDFNumber.of(0),
+          PDFNumber.of(1),
+          PDFNumber.of(gx),
+          PDFNumber.of(gy),
+        ]),
+        PDFOperator.of("Tj" as any, [PDFHexString.of(gHex)])
+      );
+      curX += p.xAdvance * scale;
+    }
+
+    ops.push(PDFOperator.of("ET" as any), PDFOperator.of("Q" as any));
+    page.pushOperators(...ops);
+  };
+
   const drawRTL = (text: string, y: number, fontSize = 12, font = regularFont) => {
     const fixed = fixArabicNumbers(text);
     const w = font.widthOfTextAtSize(fixed, fontSize);
-    page.drawText(fixed, { x: rightMargin - w, y, size: fontSize, font, color });
+    drawTextWithGPOS(fixed, rightMargin - w, y, fontSize, font);
   };
 
   const drawCenter = (text: string, y: number, fontSize = 20, font = boldFont) => {
     const fixed = fixArabicNumbers(text);
     const w = font.widthOfTextAtSize(fixed, fontSize);
-    page.drawText(fixed, { x: (pageWidth - w) / 2, y, size: fontSize, font, color });
+    drawTextWithGPOS(fixed, (pageWidth - w) / 2, y, fontSize, font);
   };
 
   const drawLabelValue = (
@@ -532,7 +592,7 @@ async function drawPage1Contract(
     const fixedLabel = fixArabicNumbers(label);
     const labelW = regularFont.widthOfTextAtSize(fixedLabel, fontSize);
     const labelX = startX - labelW;
-    page.drawText(fixedLabel, { x: labelX, y, size: fontSize, font: regularFont, color });
+    drawTextWithGPOS(fixedLabel, labelX, y, fontSize, regularFont);
 
     if (value) {
       const fixedVal = fixArabicNumbers(value);
@@ -543,7 +603,7 @@ async function drawPage1Contract(
         valW = regularFont.widthOfTextAtSize(fixedVal, valSize);
       }
       const valX = labelX - 8 - valW;
-      page.drawText(fixedVal, { x: valX, y, size: valSize, font: regularFont, color });
+      drawTextWithGPOS(fixedVal, valX, y, valSize, regularFont);
     }
   };
 
