@@ -506,11 +506,20 @@ async function drawPage1Contract(
   const rightMargin = 566;
   const pageWidth = page.getWidth();
 
-  // Reverse Arabic-Indic digit runs so that RTL text flow displays them
-  // in standard visual order (most significant digit on left).
-  // Brackets are left untouched so they wrap numbers correctly: (٣٩)
-  const fixArabicNumbers = (text: string) =>
-    text.replace(/[\u0660-\u0669]+/g, (match) => match.split("").reverse().join(""));
+  // Fix Arabic numbers and brackets for visual RTL output:
+  // 1) (٣٩) -> )٩٣( so Fontkit displays it visually as (٣٩) with brackets wrapping inward
+  // 2) Standalone numbers (٢٤, ٧٠٣٧٨٥٦٦٦٨) -> reverse digits to display left-to-right
+  const fixArabicNumbers = (text: string) => {
+    let result = text.replace(
+      /\(([\u0660-\u0669]+)\)/g,
+      (_match, digits: string) => ")" + digits.split("").reverse().join("") + "("
+    );
+    result = result.replace(
+      /(?<!\))([\u0660-\u0669]{2,})(?!\()/g,
+      (match) => match.split("").reverse().join("")
+    );
+    return result;
+  };
 
   const drawTextWithGPOS = (
     text: string,
