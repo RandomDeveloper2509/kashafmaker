@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     },
     orderBy: [
       { date: "desc" },
-      { createdAt: "desc" },
+      { rideSeqId: "desc" },
     ],
   });
 

@@ -43,7 +43,10 @@ export async function GET(request: NextRequest) {
       kashafDocuments: { take: 1, orderBy: { createdAt: "desc" }, select: { id: true } },
       _count: { select: { passengers: true } },
     },
-    orderBy: { date: "desc" },
+    orderBy: [
+      { date: "desc" },
+      { rideSeqId: "desc" },
+    ],
     take: 200,
   });
 
