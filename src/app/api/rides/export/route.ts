@@ -25,29 +25,35 @@ function formatDateDDMMYY(date: Date): string {
   return `${dd}-${mm}-${yy}`;
 }
 
-/** Extract the 1700+ sequential Kashaf ID from the snapshot ride_number field.
- *  The ride_number stored in snapshot looks like: "SXA - 726620261113001706"
- *  The last 6 digits are the sequence number (1706 → display as 1706).
- *  Falls back to the rideNumber string if no kashaf doc exists. */
+/** Extract sequential ID (1700+) for Excel export.
+ *  Prioritizes ride.rideSeqId (Int).
+ *  Falls back to parsing sequence number from kashaf doc snapshot,
+ *  or the sequential suffix from rideNumber (R-YYYYMMDD-1700). */
 function getKashafId(ride: {
   id: string;
   rideNumber: string;
+  rideSeqId?: number | null;
   kashafDocuments?: Array<{ snapshot: unknown }>;
-}): string {
+}): number | string {
+  if (ride.rideSeqId != null) {
+    return ride.rideSeqId;
+  }
   const doc = ride.kashafDocuments?.[0];
   if (doc?.snapshot && typeof doc.snapshot === "object") {
     const s = doc.snapshot as Record<string, any>;
     const rNum = s?.ride?.ride_number;
     if (rNum && typeof rNum === "string") {
-      // Pattern: "SXA - 726620261113001706" — last 6 digits are seq
       const m = rNum.match(/(\d{4,6})$/);
       if (m) {
-        return String(parseInt(m[1], 10)); // e.g. "1706"
+        return parseInt(m[1], 10);
       }
     }
   }
-  // No kashaf doc — just return the ride number as-is
-  return ride.rideNumber || String(ride.id).slice(-6);
+  const lastPart = ride.rideNumber?.split("-").pop();
+  if (lastPart && /^\d+$/.test(lastPart)) {
+    return parseInt(lastPart, 10);
+  }
+  return ride.rideNumber || String(ride.id).slice(-4);
 }
 
 export async function GET(request: NextRequest) {
@@ -192,7 +198,12 @@ export async function GET(request: NextRequest) {
         right: { style: "thin", color: { argb: "FFE2E8F0" } },
       };
 
-      if (colNumber === 1 || colNumber === 2 || colNumber === 5 || colNumber === 7) {
+      if (colNumber === 1) {
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+        if (typeof kashafId === "number") {
+          cell.numFmt = "0";
+        }
+      } else if (colNumber === 2 || colNumber === 5 || colNumber === 7) {
         cell.alignment = { vertical: "middle", horizontal: "center" };
       } else if (colNumber === 6) {
         cell.alignment = { vertical: "middle", horizontal: "right" };

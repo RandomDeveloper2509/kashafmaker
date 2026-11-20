@@ -102,9 +102,12 @@ export async function POST(
     if (!ride) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const { generateRideNumber } = await import("@/lib/utils");
+    const maxSeq = await prisma.ride.aggregate({ _max: { rideSeqId: true } });
+    const nextSeqId = (maxSeq._max.rideSeqId ?? 1699) + 1;
     const newRide = await prisma.ride.create({
       data: {
-        rideNumber: generateRideNumber(),
+        rideNumber: generateRideNumber(nextSeqId, ride.date),
+        rideSeqId: nextSeqId,
         date: ride.date,
         time: "00:00", // Default time since time field is removed
         pickup: ride.pickup,

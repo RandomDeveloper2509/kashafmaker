@@ -32,7 +32,10 @@ export async function getDriverWithVehicle(driverId: string) {
 }
 
 export async function createRide(data: RideInput) {
-  const rideNumber = generateRideNumber();
+  const maxSeq = await prisma.ride.aggregate({ _max: { rideSeqId: true } });
+  const nextSeqId = (maxSeq._max.rideSeqId ?? 1699) + 1;
+  const rideDate = new Date(data.date);
+  const rideNumber = generateRideNumber(nextSeqId, rideDate);
 
   let driverSnapshot = null;
   let vehicleSnapshot = null;
@@ -56,7 +59,8 @@ export async function createRide(data: RideInput) {
   const ride = await prisma.ride.create({
     data: {
       rideNumber,
-      date: new Date(data.date),
+      rideSeqId: nextSeqId,
+      date: rideDate,
       time: "00:00", // Default time since time field is removed
       pickup: data.pickup,
       destination: data.destination,
@@ -266,10 +270,11 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
 
   // Generate Kashaf ID formatted as: SXA - 726420261113001685
   const docCount = await prisma.kashafDocument.count();
+  const seq = ride.rideSeqId ?? (1700 + docCount);
   const kashafId = generateKashafId({
     plateNumber: vehicleSnap?.plateNumber as string | undefined,
     date: ride.date,
-    seq: 1700 + docCount,
+    seq,
   });
 
   // Inject kashafId into context.ride.ride_number so the generator prints it at bottom right

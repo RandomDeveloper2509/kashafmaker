@@ -35,13 +35,16 @@ export function formatDateTime(date: Date | string): string {
   });
 }
 
-export function generateRideNumber(): string {
-  const now = new Date();
-  const datePart = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.floor(Math.random() * 10000)
-    .toString()
-    .padStart(4, "0");
-  return `R-${datePart}-${random}`;
+export function generateRideNumber(seqId?: number, date?: Date): string {
+  const d = date || new Date();
+  const datePart = d.toISOString().slice(0, 10).replace(/-/g, "");
+  const seqPart =
+    seqId !== undefined
+      ? String(seqId)
+      : Math.floor(Math.random() * 10000)
+          .toString()
+          .padStart(4, "0");
+  return `R-${datePart}-${seqPart}`;
 }
 
 export function generateDocumentNumber(): string {

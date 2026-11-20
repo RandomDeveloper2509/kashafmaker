@@ -142,6 +142,7 @@ model Passenger {
 model Ride {
   id              String         @id @default(cuid())
   rideNumber      String         @unique
+  rideSeqId       Int?           @unique
   date            DateTime
   time            String
   pickup          String

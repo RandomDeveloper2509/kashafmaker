@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     select: {
       id: true,
       rideNumber: true,
+      rideSeqId: true,
       date: true,
       time: true,
       pickup: true,
