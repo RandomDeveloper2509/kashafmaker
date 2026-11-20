@@ -497,20 +497,24 @@ async function drawPage1Contract(
   const regularFont = await loadFont(pdfDoc, "NotoSansArabic", false, true);
   const boldFont = await loadFont(pdfDoc, "NotoSansArabic", true, true);
 
-  const darkColor: [number, number, number] = [0.1294, 0.1294, 0.1294];
-  const color = rgb(darkColor[0], darkColor[1], darkColor[2]);
+  const color = rgb(0, 0, 0); // Deep solid black matching reference photo
 
   const rightMargin = 566;
   const pageWidth = page.getWidth();
 
+  const fixArabicNumbers = (text: string) =>
+    text.replace(/[\u0660-\u0669]+/g, (match) => match.split("").reverse().join(""));
+
   const drawRTL = (text: string, y: number, fontSize = 12, font = regularFont) => {
-    const w = font.widthOfTextAtSize(text, fontSize);
-    page.drawText(text, { x: rightMargin - w, y, size: fontSize, font, color });
+    const fixed = fixArabicNumbers(text);
+    const w = font.widthOfTextAtSize(fixed, fontSize);
+    page.drawText(fixed, { x: rightMargin - w, y, size: fontSize, font, color });
   };
 
   const drawCenter = (text: string, y: number, fontSize = 20, font = boldFont) => {
-    const w = font.widthOfTextAtSize(text, fontSize);
-    page.drawText(text, { x: (pageWidth - w) / 2, y, size: fontSize, font, color });
+    const fixed = fixArabicNumbers(text);
+    const w = font.widthOfTextAtSize(fixed, fontSize);
+    page.drawText(fixed, { x: (pageWidth - w) / 2, y, size: fontSize, font, color });
   };
 
   const drawLabelValue = (
@@ -521,19 +525,21 @@ async function drawPage1Contract(
     maxValWidth: number = 280,
     fontSize = 12
   ) => {
-    const labelW = regularFont.widthOfTextAtSize(label, fontSize);
+    const fixedLabel = fixArabicNumbers(label);
+    const labelW = regularFont.widthOfTextAtSize(fixedLabel, fontSize);
     const labelX = startX - labelW;
-    page.drawText(label, { x: labelX, y, size: fontSize, font: regularFont, color });
+    page.drawText(fixedLabel, { x: labelX, y, size: fontSize, font: regularFont, color });
 
     if (value) {
+      const fixedVal = fixArabicNumbers(value);
       let valSize = fontSize;
-      let valW = regularFont.widthOfTextAtSize(value, valSize);
+      let valW = regularFont.widthOfTextAtSize(fixedVal, valSize);
       while (valSize > 8.5 && valW > maxValWidth) {
         valSize -= 0.5;
-        valW = regularFont.widthOfTextAtSize(value, valSize);
+        valW = regularFont.widthOfTextAtSize(fixedVal, valSize);
       }
       const valX = labelX - 8 - valW;
-      page.drawText(value, { x: valX, y, size: valSize, font: regularFont, color });
+      page.drawText(fixedVal, { x: valX, y, size: valSize, font: regularFont, color });
     }
   };
 
@@ -560,7 +566,7 @@ async function drawPage1Contract(
 
   // 4. First Party & Second Party
   curY -= 18;
-  drawRTL("الطرف ألاول : مؤسسة نور بصيرتي للنقليات / رقم س.ت: ٧٠٣٧٨٥٦٦٦٨", curY);
+  drawRTL("الطرف ألاول : كشف الركاب نور بصيرتي للنقليات / رقم س.ت: ٧٠٣٧٨٥٦٦٦٨", curY);
   curY -= 18;
 
   const secondParty =
