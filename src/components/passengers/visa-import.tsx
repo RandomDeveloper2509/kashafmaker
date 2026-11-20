@@ -122,8 +122,9 @@ export function VisaImportButton({
         const pages = await renderPdfPagesToBlobs(file, 2);
         for (const page of pages) {
           if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-          const ocrPayload = await extractFile(file, page, signal, true);
-          payload = mergeExtractions(payload, ocrPayload);
+          // Send rendered PDF pages as normal images so AI Vision can read them
+          const pagePayload = await extractFile(file, page, signal);
+          payload = mergeExtractions(payload, pagePayload);
           if (isExtractionComplete(payload)) break;
         }
       }
@@ -171,12 +172,12 @@ export function VisaImportButton({
     setOpen(true);
     if (inputRef.current) inputRef.current.value = "";
 
-    // Sequential queue — process one by one to avoid rate limits
+    // Sequential queue — process one by one with delay to avoid AI rate limits
     const runQueue = async () => {
       for (let i = 0; i < newScans.length; i++) {
         await scanOne(i, newScans[i].file);
         if (i < newScans.length - 1) {
-          await new Promise((r) => setTimeout(r, 150));
+          await new Promise((r) => setTimeout(r, 2000));
         }
       }
     };

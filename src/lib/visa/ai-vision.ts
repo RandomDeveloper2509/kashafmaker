@@ -13,11 +13,9 @@ interface AiVisaPayload {
 // Do NOT hardcode credentials here — GitHub push protection will block it.
 // Model priority: fastest high-accuracy models first, followed by fallbacks.
 // If any model is experiencing a temporary overload spike, it fails over immediately.
-// Model priority: ultra-fast Groq qwen3.8-27b first, followed by active Gemini models
+// Model priority: ultra-fast Groq qwen3.8-27b first, single Gemini fallback
 const GEMINI_MODELS = [
   "gemini-3.5-flash-lite",
-  "gemini-3.8-flash",
-  "gemini-flash-latest",
 ];
 
 export async function aiExtractVisa(input: {
@@ -165,7 +163,7 @@ If any field is missing or cannot be found from the document, set its value to a
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 6000); // 6s timeout for fast failover
+          const timeout = setTimeout(() => controller.abort(), 4000); // 4s — single model, fail fast
 
           const response = await fetch(url, {
             method: "POST",
