@@ -17,12 +17,12 @@ function formatDestination(pickup: string | null | undefined, destination: strin
   return p || d || "-";
 }
 
-/** Format date as DD-MM-YY */
-function formatDateDDMMYY(date: Date): string {
+/** Format date as DD-MM-YYYY */
+function formatDateDDMMYYYY(date: Date): string {
   const dd = String(date.getUTCDate()).padStart(2, "0");
   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const yy = String(date.getUTCFullYear()).slice(2);
-  return `${dd}-${mm}-${yy}`;
+  const yyyy = String(date.getUTCFullYear());
+  return `${dd}-${mm}-${yyyy}`;
 }
 
 /** Extract sequential ID (1700+) for Excel export.
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
 
   rides.forEach((ride, index) => {
     const kashafId = getKashafId(ride);
-    const dateFormatted = ride.date ? formatDateDDMMYY(ride.date) : "";
+    const dateFormatted = ride.date ? formatDateDDMMYYYY(ride.date) : "";
     const destinationCombined = formatDestination(ride.pickup, ride.destination);
     const driverName = ride.driver?.name || (ride.driverSnapshot as any)?.name || "-";
     const vehiclePlate = ride.vehicle?.plateNumber || (ride.vehicleSnapshot as any)?.plateNumber || "-";
