@@ -8,15 +8,32 @@ interface AiVisaPayload {
   visaType?: string;
 }
 
-// Fallback key is read from environment. Set GEMINI_API_KEY in your deployment
-// environment (Vercel, Railway, etc.) or in a local .env file.
-// Do NOT hardcode credentials here — GitHub push protection will block it.
-// Model priority: fastest high-accuracy models first, followed by fallbacks.
-// If any model is experiencing a temporary overload spike, it fails over immediately.
-// Model priority: ultra-fast Groq qwen3.8-27b first, single Gemini fallback
-const GEMINI_MODELS = [
-  "gemini-3.5-flash-lite",
-];
+// ---- Multi-key rotation for Gemini ----
+// Supports GEMINI_API_KEYS=key1,key2,key3 (comma-separated) OR single GEMINI_API_KEY.
+// Round-robin through keys so each key gets its own rate limit window.
+let geminiKeyIndex = 0;
+
+function getGeminiKeys(): string[] {
+  const multi = (process.env.GEMINI_API_KEYS || "").trim();
+  if (multi) {
+    return multi.split(",").map((k) => k.trim()).filter(Boolean);
+  }
+  const single = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "").trim();
+  return single ? [single] : [];
+}
+
+function nextGeminiKey(): string | null {
+  const keys = getGeminiKeys();
+  if (keys.length === 0) return null;
+  const key = keys[geminiKeyIndex % keys.length];
+  geminiKeyIndex++;
+  return key;
+}
+
+// Groq model for vision
+const GROQ_VISION_MODEL = "qwen/qwen3.8-27b";
+// Gemini model for vision (single best available)
+const GEMINI_VISION_MODEL = "gemini-3.5-flash-lite";
 
 export async function aiExtractVisa(input: {
   buffer: Uint8Array;
@@ -34,10 +51,7 @@ export async function aiExtractVisa(input: {
     process.env.NEXT_PUBLIC_GROQ_API_KEY
   )?.trim();
 
-  const geminiKey = (
-    process.env.GEMINI_API_KEY ||
-    process.env.NEXT_PUBLIC_GEMINI_API_KEY
-  )?.trim();
+  const geminiKey = nextGeminiKey();
 
   if (!groqKey && !geminiKey) return null;
   try {
@@ -53,13 +67,13 @@ export async function aiExtractVisa(input: {
       else mimeType = "image/png";
     }
 
-    // If caller already extracted PDF images, use the first one directly — avoids double extraction
+    // If caller already extracted PDF images, use the first one directly
     if (input.preExtractedImages && input.preExtractedImages.length > 0) {
       imageBuffer = Buffer.from(input.preExtractedImages[0]) as Buffer<ArrayBuffer>;
       mimeType = "image/png";
     }
 
-    // For images, preprocess with sharp to autorotate, flatten white, and convert to lightweight JPEG
+    // Compress images to lightweight JPEG for fast upload
     if (mimeType.startsWith("image/")) {
       try {
         const sharp = (await import("sharp")).default;
@@ -100,11 +114,11 @@ If any field is missing or cannot be found from the document, set its value to a
     let payload: AiVisaPayload | null = null;
     let lastError = "";
 
-    // 1. Primary: Groq Vision (Qwen 3.8 27B Vision — ultra-fast ~1s)
+    // 1. Primary: Groq Vision — ultra-fast ~1s, 3s timeout to fail fast on rate limits
     if (groqKey && mimeType.startsWith("image/")) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 6000); // 6s timeout for Groq
+        const timeout = setTimeout(() => controller.abort(), 3000);
 
         const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
@@ -114,7 +128,7 @@ If any field is missing or cannot be found from the document, set its value to a
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "qwen/qwen3.8-27b",
+            model: GROQ_VISION_MODEL,
             messages: [
               {
                 role: "user",
@@ -149,69 +163,65 @@ If any field is missing or cannot be found from the document, set its value to a
         } else {
           const errBody = await groqRes.text().catch(() => groqRes.statusText);
           lastError = `Groq HTTP ${groqRes.status}: ${errBody.slice(0, 150)}`;
-          console.warn("[ai-vision] Groq failed, falling back to Gemini:", lastError);
+          console.warn("[ai-vision] Groq failed:", lastError);
         }
       } catch (err) {
         lastError = err instanceof Error ? err.message : String(err);
-        console.warn("[ai-vision] Groq error, falling back to Gemini:", lastError);
+        console.warn("[ai-vision] Groq error:", lastError);
       }
     }
 
-    // 2. Secondary fallback: Google Gemini
+    // 2. Fallback: Google Gemini (uses rotated key)
     if ((!payload || (!payload.fullName && !payload.passportNumber)) && geminiKey) {
-      for (const model of GEMINI_MODELS) {
-        try {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 4000); // 4s — single model, fail fast
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_VISION_MODEL}:generateContent?key=${geminiKey}`;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
 
-          const response = await fetch(url, {
-            method: "POST",
-            signal: controller.signal,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    { text: prompt },
-                    { inline_data: { mime_type: mimeType, data: base64Data } },
-                  ],
-                },
-              ],
-              generationConfig: {
-                response_mime_type: "application/json",
-                temperature: 0.1,
+        const response = await fetch(url, {
+          method: "POST",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  { inline_data: { mime_type: mimeType, data: base64Data } },
+                ],
               },
-            }),
-          });
+            ],
+            generationConfig: {
+              response_mime_type: "application/json",
+              temperature: 0.1,
+            },
+          }),
+        });
 
-          clearTimeout(timeout);
+        clearTimeout(timeout);
 
-          if (!response.ok) {
-            const errBody = await response.text().catch(() => response.statusText);
-            lastError = `${model} HTTP ${response.status}: ${errBody.slice(0, 200)}`;
-            console.warn("[ai-vision] Gemini model failed:", lastError);
-            continue;
-          }
-
+        if (response.ok) {
           const data = await response.json();
           const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (rawJsonText) {
-            payload = JSON.parse(rawJsonText);
-            if (payload && (payload.fullName || payload.passportNumber)) {
-              break;
+            const parsed = JSON.parse(rawJsonText);
+            if (parsed && (parsed.fullName || parsed.passportNumber)) {
+              payload = parsed;
             }
           }
-        } catch (err) {
-          lastError = err instanceof Error ? err.message : String(err);
-          console.warn("[ai-vision] Gemini model error:", model, lastError);
-          // Try next model if this one times out or errors
+        } else {
+          const errBody = await response.text().catch(() => response.statusText);
+          lastError = `Gemini HTTP ${response.status}: ${errBody.slice(0, 200)}`;
+          console.warn("[ai-vision] Gemini failed:", lastError);
         }
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err);
+        console.warn("[ai-vision] Gemini error:", lastError);
       }
     }
 
     if (!payload || (!payload.fullName && !payload.passportNumber)) {
-      console.warn("[ai-vision] all models failed. Last error:", lastError);
+      console.warn("[ai-vision] all providers failed. Last error:", lastError);
       return null;
     }
 

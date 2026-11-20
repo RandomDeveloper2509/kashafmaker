@@ -107,6 +107,9 @@ export function VisaImportButton({
     const controller = new AbortController();
     const signal = controller.signal;
 
+    // Hard timeout: auto-abort after 15s so scans never hang indefinitely
+    const hardTimeout = setTimeout(() => controller.abort(), 15000);
+
     // Mark as scanning, store controller
     setScans((prev) =>
       prev.map((s, i) =>
@@ -128,6 +131,7 @@ export function VisaImportButton({
           if (isExtractionComplete(payload)) break;
         }
       }
+      clearTimeout(hardTimeout);
       const draft: PassengerVisaFields = {
         fullName: payload.fullName,
         passportNumber: payload.passportNumber,
@@ -140,7 +144,18 @@ export function VisaImportButton({
         )
       );
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") return; // silently cancelled
+      clearTimeout(hardTimeout);
+      if ((err as Error)?.name === "AbortError") {
+        // If the hard timeout fired, show a friendly error instead of silently cancelling
+        setScans((prev) =>
+          prev.map((s, i) =>
+            i === idx && s.status === "scanning"
+              ? { ...s, status: "error", error: "Scan timed out — tap Retry", abortController: undefined }
+              : s
+          )
+        );
+        return;
+      }
       setScans((prev) =>
         prev.map((s, i) =>
           i === idx
