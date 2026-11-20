@@ -13,10 +13,11 @@ interface AiVisaPayload {
 // Do NOT hardcode credentials here — GitHub push protection will block it.
 // Model priority: fastest high-accuracy models first, followed by fallbacks.
 // If any model is experiencing a temporary overload spike, it fails over immediately.
-// Fast Gemini fallbacks only if Groq is unavailable
+// Model priority: ultra-fast Groq qwen3.8-27b first, followed by active Gemini models
 const GEMINI_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.8-flash",
+  "gemini-flash-latest",
 ];
 
 export async function aiExtractVisa(input: {
@@ -80,12 +81,12 @@ export async function aiExtractVisa(input: {
 
     const prompt = `You are an expert immigration document and visa analyzer.
 Analyze this visa, passport, or travel permit document (which may be in English, Arabic, or bilingual, scanned, photographed, or digital).
-Extract the traveler/passenger information into a valid JSON object with exactly these 3 keys:
+Extract the traveler/passenger information into a valid JSON object with exactly these 4 keys:
 
 1. "fullName": The full personal name of the visa holder or passenger in English (e.g. "MOHAMMED KHALID AL-HARBI").
    - NEVER include label prefixes like "The Name", "thename", "Name:", "Holder:", "Applicant:", "Beneficiary:", or "الاسم".
    - NEVER include titles like "MR", "MRS", "MS".
-   - CRITICAL: A passenger's name is NEVER a country or nationality (e.g. "United Kingdom", "Saudi Arabia", "Pakistan"). If the personal traveler name is not on the document, leave it empty "".
+   - CRITICAL: A passenger's name is NEVER a country or nationality. If the personal traveler name is not on the document, leave it empty "".
 
 2. "passportNumber": The passport number or primary travel document number (e.g. "A12345678", "P98765432").
    - Do not include Visa Number, Border Number, or Application Number here.
@@ -93,16 +94,19 @@ Extract the traveler/passenger information into a valid JSON object with exactly
 3. "nationality": The traveler's nationality or country of citizenship in standard English (e.g. "Saudi Arabia", "Pakistan", "India", "Egypt", "Indonesia", "United Kingdom", "United States", "Bangladesh", "Turkey", "Jordan", "Syria").
    - If written in Arabic (like "باكستان" or "مصر" or "المملكة العربية السعودية"), convert to standard English country name.
 
+4. "visaType": The visa type (e.g. "Umrah", "Tourism Visit", "Business", "Work", "Family Visit", "Residence").
+   - If Umrah, return strictly "Umrah" with no trailing hyphens or entry types.
+
 If any field is missing or cannot be found from the document, set its value to an empty string "".`;
 
     let payload: AiVisaPayload | null = null;
     let lastError = "";
 
-    // 1. Primary: Groq Vision (Llama 3.2 11B Vision — ultra-fast ~0.5s)
+    // 1. Primary: Groq Vision (Qwen 3.8 27B Vision — ultra-fast ~1s)
     if (groqKey && mimeType.startsWith("image/")) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout for Groq
+        const timeout = setTimeout(() => controller.abort(), 6000); // 6s timeout for Groq
 
         const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
@@ -112,7 +116,7 @@ If any field is missing or cannot be found from the document, set its value to a
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "llama-3.2-11b-vision-preview",
+            model: "qwen/qwen3.8-27b",
             messages: [
               {
                 role: "user",
@@ -161,7 +165,7 @@ If any field is missing or cannot be found from the document, set its value to a
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 12000); // 12s timeout for reliable response
+          const timeout = setTimeout(() => controller.abort(), 6000); // 6s timeout for fast failover
 
           const response = await fetch(url, {
             method: "POST",

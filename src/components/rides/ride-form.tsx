@@ -168,14 +168,19 @@ export function RideForm({ rideId, initial }: RideFormProps) {
     Promise.all([
       fetch("/api/drivers?status=ACTIVE", { cache: "no-store" }).then((r) => r.json()),
       fetch("/api/vehicles?excludeInactive=true", { cache: "no-store" }).then((r) => r.json()),
-      fetch("/api/passengers", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/passengers?all=true", { cache: "no-store" }).then((r) => r.json()),
     ]).then(([d, v, p]) => {
       // Strictly exclude any inactive drivers or vehicles
       const activeDrivers = (Array.isArray(d) ? d : []).filter((driver: Driver) => driver.status === "ACTIVE");
       const activeVehicles = (Array.isArray(v) ? v : []).filter((veh: Vehicle) => veh.status !== "INACTIVE");
       setDrivers(activeDrivers);
       setVehicles(activeVehicles);
-      setAllPassengers(Array.isArray(p) ? p : []);
+      const passengerList = Array.isArray(p)
+        ? p
+        : Array.isArray(p?.passengers)
+        ? p.passengers
+        : [];
+      setAllPassengers(passengerList);
     });
   }, []);
 

@@ -9,8 +9,10 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") || "";
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const pageSize = 10;
+  const all = searchParams.get("all") === "true";
+  const pageParam = searchParams.get("page");
+  const page = pageParam ? Math.max(1, parseInt(pageParam, 10)) : 1;
+  const pageSize = all || !pageParam ? 1000 : 10;
 
   const where = query
     ? {
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
     prisma.passenger.findMany({
       where,
       orderBy: { fullName: "asc" },
-      skip: (page - 1) * pageSize,
+      skip: all || !pageParam ? 0 : (page - 1) * pageSize,
       take: pageSize,
     }),
     prisma.passenger.count({ where }),

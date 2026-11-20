@@ -360,7 +360,7 @@ export function VisaImportButton({
                     <div className="flex items-center justify-between gap-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-sm text-indigo-800">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
-                        <span>Analyzing visa with AI Vision…</span>
+                        <span>Scanning visa document…</span>
                       </div>
                       <button
                         type="button"
