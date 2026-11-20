@@ -60,17 +60,17 @@ export async function aiExtractVisa(input: {
       mimeType = "image/png";
     }
 
-    // For images, preprocess with sharp to autorotate, flatten white, and convert unsupported formats
+    // For images, preprocess with sharp to autorotate, flatten white, and convert to lightweight JPEG
     if (mimeType.startsWith("image/")) {
       try {
         const sharp = (await import("sharp")).default;
         imageBuffer = await sharp(imageBuffer)
           .rotate()
           .flatten({ background: "#ffffff" })
-          .resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true })
-          .png()
+          .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 85 })
           .toBuffer();
-        mimeType = "image/png";
+        mimeType = "image/jpeg";
       } catch {
         // Continue with original buffer if sharp fails
       }
@@ -98,11 +98,11 @@ If any field is missing or cannot be found from the document, set its value to a
     let payload: AiVisaPayload | null = null;
     let lastError = "";
 
-    // 1. Primary: Groq Vision (Qwen 3.8 27B Vision — ultra-fast ~0.5s, no overload, high throughput)
+    // 1. Primary: Groq Vision (Llama 3.2 11B Vision — ultra-fast ~0.5s)
     if (groqKey && mimeType.startsWith("image/")) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 6000); // 6s timeout for Groq
+        const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout for Groq
 
         const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
@@ -112,7 +112,7 @@ If any field is missing or cannot be found from the document, set its value to a
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "qwen/qwen3.8-27b",
+            model: "llama-3.2-11b-vision-preview",
             messages: [
               {
                 role: "user",
@@ -161,7 +161,7 @@ If any field is missing or cannot be found from the document, set its value to a
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 3500); // 3.5s per model fallback — fail fast, never hang
+          const timeout = setTimeout(() => controller.abort(), 12000); // 12s timeout for reliable response
 
           const response = await fetch(url, {
             method: "POST",

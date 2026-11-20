@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
+    const ocrOnly = formData.get("ocrOnly") === "true";
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
       buffer,
       mimeType: file.type,
       fileName: file.name,
+      ocrOnly,
     });
 
     return NextResponse.json(result);

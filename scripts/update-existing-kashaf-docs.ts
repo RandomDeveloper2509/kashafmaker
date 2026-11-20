@@ -4,8 +4,11 @@ import { generateKashafId, generateKashafFileName } from "../src/lib/utils";
 import { saveFile } from "../src/lib/storage";
 
 async function main() {
+  console.log("Fetching documents...");
   const docs = await prisma.kashafDocument.findMany({
-    include: {
+    select: {
+      id: true,
+      filePath: true,
       ride: {
         include: {
           driver: true,

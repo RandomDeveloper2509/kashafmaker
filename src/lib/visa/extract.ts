@@ -9,6 +9,7 @@ export interface ExtractVisaInput {
   buffer: Uint8Array;
   mimeType?: string;
   fileName?: string;
+  ocrOnly?: boolean;
 }
 
 export async function extractVisaInformation(input: ExtractVisaInput): Promise<VisaExtractionResult> {
@@ -17,8 +18,8 @@ export async function extractVisaInformation(input: ExtractVisaInput): Promise<V
     throw Object.assign(new Error(validation.error), { status: 400 });
   }
 
-  // --- 1. FOR PDFs: Run OCR Plus First (Native text layout + Embedded image OCR) ---
-  // Fast local extraction (~50ms - 1s) without waiting for slow AI PDF rendering
+  // --- 1. FOR PDFs: 100% OCR Plus Only (NO AI Vision) ---
+  // Pure local extraction (native text layout + embedded image OCR)
   if (validation.kind === "pdf") {
     let pdfText = "";
     let pdfTextTokens: LayoutToken[] = [];
@@ -41,32 +42,15 @@ export async function extractVisaInformation(input: ExtractVisaInput): Promise<V
     }
 
     // Run OCR Plus (PDF native text + embedded image OCR)
-    const ocrPlusResult = await extractFromPdf(input.buffer, pdfText, pdfTextTokens, pdfImages);
-
-    // If OCR Plus got complete extraction or key fields (both fullName and passportNumber), return immediately!
-    if (isExtractionComplete(ocrPlusResult) || (ocrPlusResult.fullName && ocrPlusResult.passportNumber)) {
-      return { ...ocrPlusResult, needsPageRender: false };
-    }
-
-    // 1c. AI Vision fallback for PDFs (only when OCR Plus couldn't extract key fields)
-    try {
-      const aiResult = await aiExtractVisa({
-        buffer: input.buffer,
-        mimeType: input.mimeType,
-        fileName: input.fileName,
-        preExtractedImages: pdfImages.length > 0 ? pdfImages : undefined,
-      });
-      if (aiResult && (isExtractionComplete(aiResult) || aiResult.fullName || aiResult.passportNumber)) {
-        return mergeExtractions(ocrPlusResult, aiResult);
-      }
-    } catch {
-      // Fall through to ocrPlusResult
-    }
-
-    return ocrPlusResult;
+    return extractFromPdf(input.buffer, pdfText, pdfTextTokens, pdfImages);
   }
 
-  // --- 2. FOR IMAGES: AI Vision First (super fast on images ~1-2s) ---
+  // --- 2. FOR IMAGES (if ocrOnly requested, e.g. rendered PDF pages) ---
+  if (input.ocrOnly) {
+    return extractFromImage(Buffer.from(input.buffer));
+  }
+
+  // --- 3. FOR STANDALONE IMAGES (JPG, PNG, WebP): AI Vision First ---
   try {
     const aiResult = await aiExtractVisa({
       buffer: input.buffer,
@@ -80,7 +64,7 @@ export async function extractVisaInformation(input: ExtractVisaInput): Promise<V
     // Fall through to local OCR
   }
 
-  // --- 3. Local OCR fallback for images ---
+  // --- 4. Local OCR fallback for images ---
   return extractFromImage(Buffer.from(input.buffer));
 }
 

@@ -88,12 +88,15 @@ export function VisaImportButton({
     reset();
   };
 
-  const extractFile = async (selected: File, renderedPage?: Blob, signal?: AbortSignal) => {
+  const extractFile = async (selected: File, renderedPage?: Blob, signal?: AbortSignal, ocrOnly?: boolean) => {
     const formData = new FormData();
     formData.append(
       "file",
       renderedPage ? new File([renderedPage], "visa-page.png", { type: "image/png" }) : selected
     );
+    if (ocrOnly) {
+      formData.append("ocrOnly", "true");
+    }
     const res = await fetch("/api/extract-visa", { method: "POST", body: formData, signal });
     const payload = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(payload.error || "Failed to extract visa information");
@@ -119,7 +122,7 @@ export function VisaImportButton({
         const pages = await renderPdfPagesToBlobs(file, 2);
         for (const page of pages) {
           if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-          const ocrPayload = await extractFile(file, page, signal);
+          const ocrPayload = await extractFile(file, page, signal, true);
           payload = mergeExtractions(payload, ocrPayload);
           if (isExtractionComplete(payload)) break;
         }
@@ -168,24 +171,14 @@ export function VisaImportButton({
     setOpen(true);
     if (inputRef.current) inputRef.current.value = "";
 
-    // Sequential queue — max 2 concurrent to avoid rate limits
+    // Sequential queue — process one by one to avoid rate limits
     const runQueue = async () => {
-      const MAX_CONCURRENT = 2;
-      let nextIdx = 0;
-      const inFlight: Promise<void>[] = [];
-
-      const startNext = async (): Promise<void> => {
-        if (nextIdx >= newScans.length) return;
-        const i = nextIdx++;
+      for (let i = 0; i < newScans.length; i++) {
         await scanOne(i, newScans[i].file);
-        // When one finishes, start the next
-        await startNext();
-      };
-
-      for (let slot = 0; slot < Math.min(MAX_CONCURRENT, newScans.length); slot++) {
-        inFlight.push(startNext());
+        if (i < newScans.length - 1) {
+          await new Promise((r) => setTimeout(r, 150));
+        }
       }
-      await Promise.all(inFlight);
     };
     void runQueue();
   };

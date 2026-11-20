@@ -805,13 +805,14 @@ function finalizeVisaType(hit: { value: string; labeled: true } | undefined, fro
   value = value
     .replace(/\b(umrah\s*office|office|tour\s*operator|travel\s*agency|umrah\s*operator|operator|agency|company|service\s*provider|external\s*agent|agent|sponsor|holy\s*journey)\b.*$/i, "")
     .replace(/\s*\([^)]*\)\s*$/g, "")
+    .replace(/^[-–—|:;,\s/]+|[-–—|:;,\s/]+$/g, "")
     .trim();
 
   // If the extracted value contains a primary visa category, normalize to clean title
   const lower = value.toLowerCase();
-  if (lower.startsWith("umrah") || lower.includes("عمرة")) {
+  if (lower.includes("umrah") || lower.includes("عمرة")) {
     value = "Umrah";
-  } else if (lower.startsWith("hajj") || lower.includes("حج")) {
+  } else if (lower.includes("hajj") || lower.includes("حج")) {
     value = "Hajj";
   } else if (lower.includes("touris") || lower.includes("سياح")) {
     value = "Tourism Visit";
@@ -824,6 +825,7 @@ function finalizeVisaType(hit: { value: string; labeled: true } | undefined, fro
   } else if (lower.includes("work") || lower.includes("إقامة") || lower.includes("اقامة")) {
     value = "Work";
   }
+  value = value.replace(/^[-–—|:;,\s/]+|[-–—|:;,\s/]+$/g, "").trim();
   if (ENTRY_TYPE_VALUES.has(value.toLowerCase())) {
     return {
       value: "",
@@ -993,7 +995,10 @@ function cleanCapturedValue(value: string, field: VisaFieldKey) {
       return "";
     }
   }
-  if (field === "visaType") cleaned = stripEntryTypeTail(cleaned);
+  if (field === "visaType") {
+    cleaned = stripEntryTypeTail(cleaned);
+    cleaned = cleaned.replace(/^[-–—|:;,\s/]+|[-–—|:;,\s/]+$/g, "").trim();
+  }
   return cleaned;
 }
 
@@ -1019,6 +1024,7 @@ function stripEntryTypeTail(value: string) {
     value
       .replace(/\b(entry\s*type|type\s*of\s*entry|single\s*entry|multiple\s*entry|double\s*entry)\b.*$/i, "")
       .replace(/\s+\b(single|multiple|double)\b$/i, "")
+      .replace(/^[-–—|:;,\s/]+|[-–—|:;,\s/]+$/g, "")
   );
 }
 

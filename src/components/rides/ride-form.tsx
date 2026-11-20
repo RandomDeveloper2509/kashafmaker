@@ -8,7 +8,7 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import {
   Plus, Trash2, Edit, Check, Globe, MapPin, Calendar, Car, User,
-  Search, Users, ScanSearch, CheckCircle2, X
+  Search, Users, ScanSearch, CheckCircle2, X, ArrowUp, ArrowDown
 } from "lucide-react";
 import { VisaImportButton } from "@/components/passengers/visa-import";
 import { applyVisaFieldsToPassengerForm } from "@/lib/visa/apply-fields";
@@ -321,6 +321,16 @@ export function RideForm({ rideId, initial }: RideFormProps) {
 
   const removePassenger = (id: string) => {
     setSelectedPassengers((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const movePassenger = (fromIdx: number, toIdx: number) => {
+    if (toIdx < 0 || toIdx >= selectedPassengers.length) return;
+    setSelectedPassengers((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
   };
 
   // Bulk visa import callback
@@ -654,6 +664,9 @@ export function RideForm({ rideId, initial }: RideFormProps) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/80">
+                    <th className="w-16 px-3 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      #
+                    </th>
                     <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       Name
                     </th>
@@ -671,6 +684,35 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {selectedPassengers.map((p, idx) => (
                     <tr key={p.id || idx} className="hover:bg-slate-50/70 transition-colors">
+                      {/* Order / Reorder Column */}
+                      <td className="px-3 py-3.5 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span className="font-mono text-xs font-bold text-slate-500 w-4 text-center">
+                            {idx + 1}
+                          </span>
+                          <div className="inline-flex flex-col gap-0.5">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={() => movePassenger(idx, idx - 1)}
+                              className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-slate-100 disabled:opacity-20 disabled:hover:text-slate-400 disabled:hover:bg-transparent transition-colors"
+                              title="Move passenger up"
+                            >
+                              <ArrowUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === selectedPassengers.length - 1}
+                              onClick={() => movePassenger(idx, idx + 1)}
+                              className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-slate-100 disabled:opacity-20 disabled:hover:text-slate-400 disabled:hover:bg-transparent transition-colors"
+                              title="Move passenger down"
+                            >
+                              <ArrowDown className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+
                       {/* Name Column */}
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
