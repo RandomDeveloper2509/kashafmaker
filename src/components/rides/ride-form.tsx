@@ -101,87 +101,6 @@ interface Passenger {
   phone?: string | null;
 }
 
-function ReferralInput({
-  value,
-  onChange,
-  drivers = [],
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  drivers?: Driver[];
-}) {
-  const [open, setOpen] = useState(false);
-
-  const referralSuggestions = [
-    "Self",
-    "NBT-ONLINE",
-    "NBT-Abdullah",
-    "NBT-QariSahab",
-    "NBT-AliNoor",
-    "NBT-RTG",
-    "NBT-PanjKash",
-    "HarmainGo",
-    "NBT-NoorUlHaram",
-    ...drivers.map((d) => d.name),
-  ];
-
-  const filtered = referralSuggestions.filter(
-    (s) => s.toLowerCase().includes(value.toLowerCase()) && s.toLowerCase() !== value.toLowerCase()
-  );
-  const showDropdown = open && (value.length === 0 || filtered.length > 0);
-
-  return (
-    <div className="relative">
-      <label className="block text-xs font-semibold text-slate-700 mb-1">
-        Referral
-      </label>
-      <input
-        type="text"
-        placeholder="e.g. Self, NBT-ONLINE, or driver name..."
-        value={value}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-      />
-      {showDropdown && (
-        <ul className="absolute z-30 mt-1 w-full max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
-          {(value.length === 0 ? referralSuggestions : filtered).map((s) => (
-            <li key={s}>
-              <button
-                type="button"
-                onMouseDown={() => {
-                  onChange(s);
-                  setOpen(false);
-                }}
-                className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
-              >
-                <span>{s}</span>
-                {s === "Self" ? (
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase bg-slate-100 px-1.5 py-0.5 rounded">
-                    Default
-                  </span>
-                ) : drivers.some((d) => d.name === s) ? (
-                  <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    Driver
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
-                    Channel
-                  </span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <p className="mt-1 text-[11px] text-slate-400">
-        Default is &quot;Self&quot;. Pick from the list or type any custom referral.
-      </p>
-    </div>
-  );
-}
-
 interface RideFormProps {
   rideId?: string;
   initial?: {
@@ -242,7 +161,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
     driverId: initial?.driverId || "",
     vehicleId: initial?.vehicleId || "",
     fare: initial?.fare != null ? String(initial.fare) : "",
-    referral: initial?.referral !== undefined && initial?.referral !== null ? initial.referral : "Self",
+    referral: initial?.referral ? initial.referral : "Self",
   });
 
   useEffect(() => {
@@ -592,11 +511,44 @@ export function RideForm({ rideId, initial }: RideFormProps) {
               </p>
             </div>
 
-            <ReferralInput
-              value={form.referral}
-              onChange={(val) => setForm({ ...form, referral: val })}
-              drivers={drivers}
-            />
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Referral
+              </label>
+              <select
+                value={form.referral}
+                onChange={(e) => setForm({ ...form, referral: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              >
+                <option value="Self">Self (Default)</option>
+                <optgroup label="System Referral Channels">
+                  <option value="NBT-ONLINE">NBT-ONLINE</option>
+                  <option value="NBT-Abdullah">NBT-Abdullah</option>
+                  <option value="NBT-QariSahab">NBT-QariSahab</option>
+                  <option value="NBT-AliNoor">NBT-AliNoor</option>
+                  <option value="NBT-RTG">NBT-RTG</option>
+                  <option value="NBT-PanjKash">NBT-PanjKash</option>
+                  <option value="HarmainGo">HarmainGo</option>
+                  <option value="NBT-NoorUlHaram">NBT-NoorUlHaram</option>
+                </optgroup>
+                <optgroup label="Driver Referrals">
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </optgroup>
+                {form.referral &&
+                  !["Self", "NBT-ONLINE", "NBT-Abdullah", "NBT-QariSahab", "NBT-AliNoor", "NBT-RTG", "NBT-PanjKash", "HarmainGo", "NBT-NoorUlHaram", ...drivers.map((d) => d.name)].includes(form.referral) && (
+                    <optgroup label="Other">
+                      <option value={form.referral}>{form.referral}</option>
+                    </optgroup>
+                  )}
+              </select>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Default is &quot;Self&quot;. Select channel or driver if referred.
+              </p>
+            </div>
           </div>
 
           {/* Notes */}
