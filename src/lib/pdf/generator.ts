@@ -66,12 +66,16 @@ async function loadFont(
     Times: bold ? "Times-Bold" : "Times-Roman",
     Courier: bold ? "Courier-Bold" : "Courier",
     Calibri: bold ? "calibrib.ttf" : "calibri.ttf",
-    NotoSansArabic: bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf",
+    NotoSansArabic: bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf",
+    Tajawal: bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf",
   };
 
   if (forArabic) {
-    const fontFile = bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf";
-    const fontBytes = await readFontBytes(fontFile);
+    const fontFile = bold ? "Tajawal-Bold.ttf" : "Tajawal-Regular.ttf";
+    let fontBytes = await readFontBytes(fontFile);
+    if (!fontBytes) {
+      fontBytes = await readFontBytes(bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf");
+    }
     if (fontBytes) {
       try {
         return await pdfDoc.embedFont(fontBytes, { subset: true });
@@ -566,7 +570,7 @@ async function drawPage1Contract(
 
   // 4. First Party & Second Party
   curY -= 18;
-  drawRTL("الطرف ألاول : كشف الركاب نور بصيرتي للنقليات / رقم س.ت: ٧٠٣٧٨٥٦٦٦٨", curY);
+  drawRTL("الطرف ألاول : مؤسسة نور بصيرتي للنقليات / رقم س.ت: ٧٠٣٧٨٥٦٦٦٨", curY);
   curY -= 18;
 
   const secondParty =
