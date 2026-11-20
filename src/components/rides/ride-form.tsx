@@ -161,7 +161,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
     driverId: initial?.driverId || "",
     vehicleId: initial?.vehicleId || "",
     fare: initial?.fare != null ? String(initial.fare) : "",
-    referral: initial?.referral || "",
+    referral: initial?.referral !== undefined && initial?.referral !== null ? initial.referral : "Self",
   });
 
   useEffect(() => {
@@ -515,32 +515,68 @@ export function RideForm({ rideId, initial }: RideFormProps) {
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Referral
               </label>
-              <select
-                value={form.referral}
-                onChange={(e) => setForm({ ...form, referral: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-              >
-                <option value="">Select referral source...</option>
-                <optgroup label="System Referral Channels">
-                  <option value="NBT-ONLINE">NBT-ONLINE</option>
-                  <option value="NBT-Abdullah">NBT-Abdullah</option>
-                  <option value="NBT-QariSahab">NBT-QariSahab</option>
-                  <option value="NBT-AliNoor">NBT-AliNoor</option>
-                  <option value="NBT-RTG">NBT-RTG</option>
-                  <option value="NBT-PanjKash">NBT-PanjKash</option>
-                  <option value="HarmainGo">HarmainGo</option>
-                  <option value="NBT-NoorUlHaram">NBT-NoorUlHaram</option>
-                </optgroup>
-                <optgroup label="Driver Referrals">
-                  {drivers.map((d) => (
-                    <option key={d.id} value={d.name}>
-                      {d.name}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    list="referral-options"
+                    value={form.referral}
+                    onChange={(e) => setForm({ ...form, referral: e.target.value })}
+                    placeholder="Type or select referral (default: Self)..."
+                    className="w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  />
+                  <datalist id="referral-options">
+                    <option value="Self" />
+                    <option value="NBT-ONLINE" />
+                    <option value="NBT-Abdullah" />
+                    <option value="NBT-QariSahab" />
+                    <option value="NBT-AliNoor" />
+                    <option value="NBT-RTG" />
+                    <option value="NBT-PanjKash" />
+                    <option value="HarmainGo" />
+                    <option value="NBT-NoorUlHaram" />
+                    {drivers.map((d) => (
+                      <option key={d.id} value={d.name} />
+                    ))}
+                  </datalist>
+                </div>
+                <select
+                  value={
+                    ["Self", "NBT-ONLINE", "NBT-Abdullah", "NBT-QariSahab", "NBT-AliNoor", "NBT-RTG", "NBT-PanjKash", "HarmainGo", "NBT-NoorUlHaram", ...drivers.map((d) => d.name)].includes(form.referral)
+                      ? form.referral
+                      : "__custom__"
+                  }
+                  onChange={(e) => {
+                    if (e.target.value !== "__custom__") {
+                      setForm({ ...form, referral: e.target.value });
+                    }
+                  }}
+                  className="rounded-lg border border-slate-300 bg-slate-50 py-2 px-2.5 text-xs text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all shrink-0 max-w-[150px]"
+                  title="Choose from list or type custom in input"
+                >
+                  <option value="__custom__">Custom / Type...</option>
+                  <option value="Self">Self</option>
+                  <optgroup label="System Channels">
+                    <option value="NBT-ONLINE">NBT-ONLINE</option>
+                    <option value="NBT-Abdullah">NBT-Abdullah</option>
+                    <option value="NBT-QariSahab">NBT-QariSahab</option>
+                    <option value="NBT-AliNoor">NBT-AliNoor</option>
+                    <option value="NBT-RTG">NBT-RTG</option>
+                    <option value="NBT-PanjKash">NBT-PanjKash</option>
+                    <option value="HarmainGo">HarmainGo</option>
+                    <option value="NBT-NoorUlHaram">NBT-NoorUlHaram</option>
+                  </optgroup>
+                  <optgroup label="Driver Referrals">
+                    {drivers.map((d) => (
+                      <option key={d.id} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
               <p className="mt-1 text-[11px] text-slate-400">
-                Referral channel or driver who referred this ride
+                Default is &quot;Self&quot;. Pick from the dropdown or type any custom referral directly.
               </p>
             </div>
           </div>
