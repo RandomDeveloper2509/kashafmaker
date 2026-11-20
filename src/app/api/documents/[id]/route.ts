@@ -7,7 +7,10 @@ import { pdfContentDisposition } from "@/lib/utils";
 async function servePdf(id: string, download: boolean) {
   const document = await prisma.kashafDocument.findUnique({
     where: { id },
-    include: { template: true },
+    include: {
+      template: true,
+      ride: { select: { pickup: true, destination: true } },
+    },
   });
   if (!document) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -90,10 +93,24 @@ async function servePdf(id: string, download: boolean) {
     return NextResponse.json({ error: "PDF file is missing" }, { status: 404 });
   }
 
+  let filename = document.documentNumber;
+  const p = (document.ride?.pickup || (document.snapshot as any)?.ride?.pickup || "").trim();
+  const d = (document.ride?.destination || (document.snapshot as any)?.ride?.destination || "").trim();
+  const route = p && d ? (d.toLowerCase().startsWith("to ") ? `${p} ${d}` : `${p} to ${d}`) : (p || d || "");
+
+  if (route && !filename.toLowerCase().includes(route.toLowerCase())) {
+    // If filename only had destination at the end, replace with full route; otherwise append with space
+    if (d && filename.toLowerCase().includes(d.toLowerCase())) {
+      filename = filename.replace(new RegExp(`\\s*-\\s*${d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i'), ` ${route}`);
+    } else {
+      filename = `${filename} ${route}`;
+    }
+  }
+
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": pdfContentDisposition(document.documentNumber, download),
+      "Content-Disposition": pdfContentDisposition(filename, download),
       "Cache-Control": "private, max-age=3600",
     },
   });

@@ -302,6 +302,8 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
     companyName: company.name,
     date: ride.date,
     plateNumber: context.vehicle.plate_number,
+    pickup: ride.pickup,
+    destination: ride.destination,
   });
   let documentNumber = baseName;
   for (let n = 2; n < 50; n++) {

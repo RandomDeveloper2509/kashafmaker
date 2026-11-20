@@ -80,45 +80,69 @@ export function generateKashafId(options: {
   return `${alphaPrefix} - ${plateDigits}${datePart}${seqPart}`;
 }
 
-/** Kashaf download/display name: كشف الركاب {Arabic company} {dd-mm-yyyy} - {plate} */
+/** Kashaf download/display name: كشف الركاب {Arabic company} {YYYY-MM-DD} - {plate} {pickup to destination} */
 export function generateKashafFileName(input: {
   companyNameAr?: string | null;
   companyName?: string | null;
   date?: Date | string | null;
   plateNumber?: string | null;
+  pickup?: string | null;
+  destination?: string | null;
 }): string {
-  const company =
+  let company =
     (input.companyNameAr && input.companyNameAr.trim()) ||
     (input.companyName && input.companyName.trim()) ||
-    "نور بصيرتى للنقليات";
+    "نور بصيرتي للنقل";
+
+  const prefix = company.startsWith("كشف الركاب") ? company : `كشف الركاب ${company}`;
 
   let datePart = "";
   if (input.date instanceof Date && !Number.isNaN(input.date.getTime())) {
-    const dd = String(input.date.getDate()).padStart(2, "0");
+    const yyyy = input.date.getFullYear();
     const mm = String(input.date.getMonth() + 1).padStart(2, "0");
-    datePart = `${dd}-${mm}-${input.date.getFullYear()}`;
+    const dd = String(input.date.getDate()).padStart(2, "0");
+    datePart = `${yyyy}-${mm}-${dd}`;
   } else if (typeof input.date === "string" && input.date.trim()) {
     const raw = input.date.trim();
-    const dmy = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
     const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (dmy) {
-      datePart = `${dmy[1].padStart(2, "0")}-${dmy[2].padStart(2, "0")}-${dmy[3]}`;
-    } else if (iso) {
-      datePart = `${iso[3]}-${iso[2]}-${iso[1]}`;
+    const dmy = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+    if (iso) {
+      datePart = `${iso[1]}-${iso[2]}-${iso[3]}`;
+    } else if (dmy) {
+      datePart = `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
     } else {
       const parsed = new Date(raw);
       if (!Number.isNaN(parsed.getTime())) {
-        datePart = `${String(parsed.getDate()).padStart(2, "0")}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${parsed.getFullYear()}`;
+        const yyyy = parsed.getFullYear();
+        const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+        const dd = String(parsed.getDate()).padStart(2, "0");
+        datePart = `${yyyy}-${mm}-${dd}`;
       }
     }
   }
   if (!datePart) {
     const now = new Date();
-    datePart = `${String(now.getDate()).padStart(2, "0")}-${String(now.getMonth() + 1).padStart(2, "0")}-${now.getFullYear()}`;
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    datePart = `${yyyy}-${mm}-${dd}`;
   }
 
   const plate = (input.plateNumber && input.plateNumber.trim()) || "----";
-  return `كشف الركاب ${company} ${datePart} - ${plate}`.replace(/[<>:"/\\|?*]/g, " ").replace(/\s+/g, " ").trim();
+  const p = (input.pickup || "").trim();
+  const d = (input.destination || "").trim();
+  let route = "";
+  if (p && d) {
+    route = d.toLowerCase().startsWith("to ") ? `${p} ${d}` : `${p} to ${d}`;
+  } else {
+    route = p || d || "";
+  }
+
+  const base = `${prefix} ${datePart} - ${plate}`;
+  return (route ? `${base} ${route}` : base)
+    .replace(/[<>:"/\\|?*]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function pdfContentDisposition(filename: string, download: boolean): string {

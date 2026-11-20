@@ -100,19 +100,39 @@ async function main() {
       generatedAt: new Date().toISOString(),
     };
 
+    const baseName = generateKashafFileName({
+      companyNameAr: company.nameAr,
+      companyName: company.name,
+      date: ride.date,
+      plateNumber: context.vehicle.plate_number,
+      pickup: ride.pickup,
+      destination: ride.destination,
+    });
+
+    let newDocNumber = baseName;
+    for (let n = 2; n < 50; n++) {
+      const taken = await prisma.kashafDocument.findFirst({
+        where: { documentNumber: newDocNumber, NOT: { id: doc.id } },
+      });
+      if (!taken) break;
+      newDocNumber = `${baseName} (${n})`;
+    }
+
     if (doc.filePath) {
-      await saveFile("documents", Buffer.from(pdfBytes), doc.filePath.replace(/^documents[\\/]/, ""));
+      await saveFile("documents", Buffer.from(pdfBytes), `${newDocNumber}.pdf`);
     }
 
     await prisma.kashafDocument.update({
       where: { id: doc.id },
       data: {
+        documentNumber: newDocNumber,
+        filePath: `documents/${newDocNumber}.pdf`,
         snapshot: snapshot as any,
         pdfData: Buffer.from(pdfBytes).toString("base64"),
       },
     });
 
-    console.log(`Doc ${doc.id} (Ride #${seq}) updated with kashafId = ${kashafId}`);
+    console.log(`Doc ${doc.id} (Ride #${seq}) updated with kashafId = ${kashafId}, docNumber = ${newDocNumber}`);
   }
 
   console.log("All existing Kashaf documents updated successfully.");
