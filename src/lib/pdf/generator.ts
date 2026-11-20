@@ -21,6 +21,7 @@ import {
   PassengerTableConfig,
   resolveFieldValue,
 } from "./types";
+import { isNbisStyleTemplate } from "./nbis-template";
 import { readFile } from "../storage";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "./uploads";
@@ -65,11 +66,12 @@ async function loadFont(
     Times: bold ? "Times-Bold" : "Times-Roman",
     Courier: bold ? "Courier-Bold" : "Courier",
     Calibri: bold ? "calibrib.ttf" : "calibri.ttf",
-    NotoSansArabic: "NotoSansArabic-Regular.ttf",
+    NotoSansArabic: bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf",
   };
 
   if (forArabic) {
-    const fontBytes = await readFontBytes("NotoSansArabic-Regular.ttf");
+    const fontFile = bold ? "NotoSansArabic-Bold.ttf" : "NotoSansArabic-Regular.ttf";
+    const fontBytes = await readFontBytes(fontFile);
     if (fontBytes) {
       try {
         return await pdfDoc.embedFont(fontBytes, { subset: true });
@@ -487,6 +489,141 @@ async function drawPassengerTable(
   }
 }
 
+async function drawPage1Contract(
+  page: PDFPage,
+  context: KashafDataContext,
+  pdfDoc: PDFDocument
+) {
+  const regularFont = await loadFont(pdfDoc, "NotoSansArabic", false, true);
+  const boldFont = await loadFont(pdfDoc, "NotoSansArabic", true, true);
+
+  const darkColor: [number, number, number] = [0.1294, 0.1294, 0.1294];
+  const color = rgb(darkColor[0], darkColor[1], darkColor[2]);
+
+  const rightMargin = 566;
+  const pageWidth = page.getWidth();
+
+  const drawRTL = (text: string, y: number, fontSize = 12, font = regularFont) => {
+    const w = font.widthOfTextAtSize(text, fontSize);
+    page.drawText(text, { x: rightMargin - w, y, size: fontSize, font, color });
+  };
+
+  const drawCenter = (text: string, y: number, fontSize = 20, font = boldFont) => {
+    const w = font.widthOfTextAtSize(text, fontSize);
+    page.drawText(text, { x: (pageWidth - w) / 2, y, size: fontSize, font, color });
+  };
+
+  const drawLabelValue = (
+    label: string,
+    value: string,
+    y: number,
+    startX: number = rightMargin,
+    maxValWidth: number = 280,
+    fontSize = 12
+  ) => {
+    const labelW = regularFont.widthOfTextAtSize(label, fontSize);
+    const labelX = startX - labelW;
+    page.drawText(label, { x: labelX, y, size: fontSize, font: regularFont, color });
+
+    if (value) {
+      let valSize = fontSize;
+      let valW = regularFont.widthOfTextAtSize(value, valSize);
+      while (valSize > 8.5 && valW > maxValWidth) {
+        valSize -= 0.5;
+        valW = regularFont.widthOfTextAtSize(value, valSize);
+      }
+      const valX = labelX - 8 - valW;
+      page.drawText(value, { x: valX, y, size: valSize, font: regularFont, color });
+    }
+  };
+
+  // 1. Title
+  drawCenter("عقد نقل على الطرق البرية", 675, 20, boldFont);
+
+  // 2. Date
+  const dateStr = context.ride?.date || "";
+  drawLabelValue("التاريخ :", dateStr, 640);
+
+  // 3. Paragraph 1 (5 lines)
+  const p1Lines = [
+    "تم ابرام هذا العقد بين المتعاقدين بناء على المادة (٣٩) التاسعة و الثالثون من اللائحة المنظمة لنشاط النقل",
+    "المتخصص و تأجير و توجيه الحافلات و بناء على الفقرة (١) من المادة (٣٩) و التي تنص على ان يجب على",
+    "الناقل ابرام عقد نقل مع الأطراف المحددين في المادة (٤٠) قبل تنفيذ عمليات النقل على الطرق البرية و بما لا",
+    "يخالف احكام هذه اللا ئحة ووفقا الألية التي تحددها هيئة النقل و بناء على ما سبق تم ابرام عقد النقل بين",
+    "الأطراف الأتيه",
+  ];
+  let curY = 604;
+  for (const line of p1Lines) {
+    drawRTL(line, curY);
+    curY -= 18;
+  }
+
+  // 4. First Party & Second Party
+  curY -= 18;
+  drawRTL("الطرف ألاول : مؤسسة نور بصيرتي للنقليات / رقم س.ت: ٧٠٣٧٨٥٦٦٦٨", curY);
+  curY -= 18;
+
+  const secondParty =
+    context.third_party ||
+    (context.passengers?.[0]?.passenger_name
+      ? context.passengers[0].passenger_name +
+        (context.passengers.length > 1 ? ` and ${context.passengers.length - 1} Members` : "")
+      : "");
+  drawLabelValue("الطرف الثاني :", secondParty, curY, rightMargin, 350);
+
+  // 5. Paragraph 2 (2 lines)
+  curY -= 26;
+  const p2Lines = [
+    "اتفق الطرفان على أن ينفذ الطرف الأول عملية النقل للطرف الثاني مع مرافقيه و ذويهم من الموقع المحدد",
+    "مسبقا مع الطرف الثاني و توصيلهم الى الجهه المحدده بالعقد.",
+  ];
+  for (const line of p2Lines) {
+    drawRTL(line, curY);
+    curY -= 18;
+  }
+
+  // 6. Trip line: النقل من : {pickup} وصولا الى : {destination}
+  curY -= 22;
+  const pickup = context.ride?.pickup || "";
+  const destination = context.ride?.destination || "";
+  drawLabelValue("النقل من :", pickup, curY, rightMargin, 150);
+  drawLabelValue("وصولا الى :", destination, curY, 320, 150);
+
+  // 7. Paragraph 3 (Cancellation terms - 2 lines)
+  curY -= 26;
+  const p3Lines = [
+    "في حالة الغاء التعاقد الى سبب شخصى او أسباب أخرى تتعلق في الحجوزات او الأنظمة تكون سياسة الإلغاء و",
+    "الاستبدال.",
+  ];
+  for (const line of p3Lines) {
+    drawRTL(line, curY);
+    curY -= 18;
+  }
+
+  // 8. Paragraph 4 (Ministry of Commerce rules - 2 lines)
+  curY -= 22;
+  const p4Lines = [
+    "حسب نظام وزارة التجارة السعودي في حالة الحجز و تم الإلغاء قبل موعد الرحله بأكثر من ٢٤ ساعه يتم استرداد",
+    "المبلغ كامل.",
+  ];
+  for (const line of p4Lines) {
+    drawRTL(line, curY);
+    curY -= 18;
+  }
+
+  // 9. Paragraph 5 (Online booking terms - 3 lines)
+  curY -= 22;
+  const p5Lines = [
+    "و في حالة طلب الطرف الثاني الحجز من خلال الموقع الالكتروني للمؤسسه يعتبر هذا الحجز و موافقته على",
+    "الشروط والحكام بالموقع الالكتروني هو موافقة على هذا العقد لتنفيذ عملية النقل المتفق عليها مع الطرف",
+    "الاول بواسطة حافلات المؤسسة المرخصه و المتوافقه مع الاشتراطات المقررة من هيئة النقل.",
+  ];
+  for (const line of p5Lines) {
+    drawRTL(line, curY);
+    curY -= 18;
+  }
+}
+
 export async function generateKashafPdf(
   templatePath: string,
   fieldConfig: TemplateFieldConfig,
@@ -521,7 +658,14 @@ export async function generateKashafPdf(
     hideUnusedPassengerRows(tablePage, fieldConfig.passengerTable, context.passengers.length, letterhead);
   }
 
+  if (pages.length >= 1 && isNbisStyleTemplate(pages.length, pages[0].getWidth(), pages[0].getHeight())) {
+    await drawPage1Contract(pages[0], context, pdfDoc);
+  }
+
   for (const field of fieldConfig.fields) {
+    if (field.page === 1 && isNbisStyleTemplate(pages.length, pages[0].getWidth(), pages[0].getHeight())) {
+      continue;
+    }
     const pageIndex = field.page - 1;
     if (pageIndex < 0 || pageIndex >= pages.length) continue;
 
@@ -607,24 +751,24 @@ export function getSampleContext(): KashafDataContext {
   return {
     company: {
       company_name: "Nour Basirti Transport",
-      company_name_ar: "نور بصيرتي للنقل",
-      commercial_registration: "1010123456",
+      company_name_ar: "مؤسسة نور بصيرتي للنقليات",
+      commercial_registration: "7037856668",
       vat_number: "300012345600003",
-      company_phone: "+966 50 123 4567",
-      company_email: "info@nourbasirti.com",
+      company_phone: "+966 55 126 2206",
+      company_email: "info@nourbaserti.com",
       company_address: "King Fahd Road, Riyadh",
       company_city: "Riyadh",
       company_country: "Saudi Arabia",
     },
     ride: {
-      ride_number: "R-20250905-0001",
-      date: "05/09/2025",
+      ride_number: "SXA-7266",
+      date: "15 November 2026",
       time: "08:00",
-      pickup: "Riyadh Airport",
-      destination: "Makkah Hotel",
+      pickup: "JEDDAH CITY",
+      destination: "MAKKAH HOTEL",
       trip_type: "Umrah Transfer",
       notes: "Sample ride for preview",
-      datetime: "05/09/2025 08:00",
+      datetime: "15 November 2026",
     },
     driver: {
       driver_name: "Rehmat Ullah",
@@ -646,27 +790,55 @@ export function getSampleContext(): KashafDataContext {
     },
     passengers: [
       {
-        passenger_name: "Mansoor Ahmed",
+        passenger_name: "ISLOM KARIMOV",
         passport_number: "CE1159477",
-        nationality: "Pakistan",
+        nationality: "Uzbekistan",
         gender: "Male",
         visa_type: "Umrah",
       },
       {
-        passenger_name: "Raja Shahid Nazir Janjua",
+        passenger_name: "Mansoor Ahmed",
         passport_number: "AN8785242",
         nationality: "Pakistan",
         gender: "Male",
         visa_type: "Umrah",
       },
       {
-        passenger_name: "Asma Mansoor",
+        passenger_name: "Raja Shahid Nazir Janjua",
         passport_number: "AK0711234",
+        nationality: "Pakistan",
+        gender: "Male",
+        visa_type: "Umrah",
+      },
+      {
+        passenger_name: "Asma Mansoor",
+        passport_number: "AK0711235",
         nationality: "Pakistan",
         gender: "Female",
         visa_type: "Umrah",
       },
+      {
+        passenger_name: "Fatima Bibi",
+        passport_number: "AK0711236",
+        nationality: "Pakistan",
+        gender: "Female",
+        visa_type: "Umrah",
+      },
+      {
+        passenger_name: "Zainab Bibi",
+        passport_number: "AK0711237",
+        nationality: "Pakistan",
+        gender: "Female",
+        visa_type: "Umrah",
+      },
+      {
+        passenger_name: "Ali Ahmed",
+        passport_number: "AK0711238",
+        nationality: "Pakistan",
+        gender: "Male",
+        visa_type: "Umrah",
+      },
     ],
-    third_party: "Mansoor Ahmed and 2 Members",
+    third_party: "ISLOM KARIMOV and 6 Members",
   };
 }
