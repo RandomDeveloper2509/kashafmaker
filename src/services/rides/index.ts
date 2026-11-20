@@ -269,8 +269,19 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
   );
 
   // Generate Kashaf ID formatted as: SXA - 726420261113001685
-  const docCount = await prisma.kashafDocument.count();
-  const seq = ride.rideSeqId ?? (1700 + docCount);
+  // Always use the ride's sequential ID (e.g. 1700, 1780) so the last digits in Kashaf match the ride ID
+  let seq = ride.rideSeqId;
+  if (!seq) {
+    const parts = ride.rideNumber?.split("-");
+    const last = parts?.[parts.length - 1];
+    if (last && /^\d+$/.test(last)) {
+      seq = parseInt(last, 10);
+    }
+  }
+  if (!seq) {
+    const maxSeq = await prisma.ride.aggregate({ _max: { rideSeqId: true } });
+    seq = (maxSeq._max.rideSeqId ?? 1699) + 1;
+  }
   const kashafId = generateKashafId({
     plateNumber: vehicleSnap?.plateNumber as string | undefined,
     date: ride.date,
