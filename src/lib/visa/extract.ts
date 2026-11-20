@@ -17,44 +17,61 @@ export async function extractVisaInformation(input: ExtractVisaInput): Promise<V
     throw Object.assign(new Error(validation.error), { status: 400 });
   }
 
-  // 1. For PDFs: try fast native text extraction (~50ms)
-  // Also extract embedded images once here — reused by AI vision AND OCR fallback below.
-  let pdfText = "";
-  let pdfTextTokens: LayoutToken[] = [];
-  let pdfImages: Buffer[] = [];
-
+  // --- 1. FOR PDFs: Run OCR Plus First (Native text layout + Embedded image OCR) ---
+  // Fast local extraction (~50ms - 1s) without waiting for slow AI PDF rendering
   if (validation.kind === "pdf") {
-    // 1a. Text extraction
+    let pdfText = "";
+    let pdfTextTokens: LayoutToken[] = [];
+    let pdfImages: Buffer[] = [];
+
+    // 1a. Native Text extraction
     try {
       const layout = await extractPdfLayout(input.buffer);
       pdfText = layout.text;
       pdfTextTokens = layout.tokens;
-      if (pdfText.trim()) {
-        const textResult = parseVisaFields({ text: pdfText, tokens: pdfTextTokens, fromOcr: false, method: "pdf_text" });
-        if (isExtractionComplete(textResult)) {
-          return { ...textResult, needsPageRender: false };
-        }
-      }
     } catch {
-      // Fall through — pdf.js couldn't parse (Acrobat-specific PDF)
+      // PDF.js couldn't parse
     }
 
-    // 1b. Extract embedded images once — shared by AI vision and OCR fallback
+    // 1b. Embedded images
     try {
       pdfImages = await extractPdfEmbeddedImages(input.buffer);
     } catch {
       pdfImages = [];
     }
+
+    // Run OCR Plus (PDF native text + embedded image OCR)
+    const ocrPlusResult = await extractFromPdf(input.buffer, pdfText, pdfTextTokens, pdfImages);
+
+    // If OCR Plus got complete extraction or key fields (both fullName and passportNumber), return immediately!
+    if (isExtractionComplete(ocrPlusResult) || (ocrPlusResult.fullName && ocrPlusResult.passportNumber)) {
+      return { ...ocrPlusResult, needsPageRender: false };
+    }
+
+    // 1c. AI Vision fallback for PDFs (only when OCR Plus couldn't extract key fields)
+    try {
+      const aiResult = await aiExtractVisa({
+        buffer: input.buffer,
+        mimeType: input.mimeType,
+        fileName: input.fileName,
+        preExtractedImages: pdfImages.length > 0 ? pdfImages : undefined,
+      });
+      if (aiResult && (isExtractionComplete(aiResult) || aiResult.fullName || aiResult.passportNumber)) {
+        return mergeExtractions(ocrPlusResult, aiResult);
+      }
+    } catch {
+      // Fall through to ocrPlusResult
+    }
+
+    return ocrPlusResult;
   }
 
-  // 2. AI Vision extraction — fast path (2-3s when Gemini is healthy)
-  // Pass pre-extracted images for PDFs to avoid double-extracting
+  // --- 2. FOR IMAGES: AI Vision First (super fast on images ~1-2s) ---
   try {
     const aiResult = await aiExtractVisa({
       buffer: input.buffer,
       mimeType: input.mimeType,
       fileName: input.fileName,
-      preExtractedImages: pdfImages.length > 0 ? pdfImages : undefined,
     });
     if (aiResult && (isExtractionComplete(aiResult) || aiResult.fullName || aiResult.passportNumber)) {
       return aiResult;
@@ -63,10 +80,7 @@ export async function extractVisaInformation(input: ExtractVisaInput): Promise<V
     // Fall through to local OCR
   }
 
-  // 3. Local OCR fallback (slow ~20s — only reached if Gemini fails)
-  if (validation.kind === "pdf") {
-    return extractFromPdf(input.buffer, pdfText, pdfTextTokens, pdfImages);
-  }
+  // --- 3. Local OCR fallback for images ---
   return extractFromImage(Buffer.from(input.buffer));
 }
 

@@ -115,7 +115,7 @@ export function VisaImportButton({
       let payload = await extractFile(file, undefined, signal);
       const isPdf =
         file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-      if ((payload.needsPageRender || !isExtractionComplete(payload)) && isPdf) {
+      if (payload.needsPageRender && (!payload.fullName || !payload.passportNumber) && isPdf) {
         const pages = await renderPdfPagesToBlobs(file, 2);
         for (const page of pages) {
           if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
