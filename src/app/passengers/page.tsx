@@ -45,6 +45,11 @@ export default function PassengersPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 300);
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
   // Edit / Add modal state
   const [editId, setEditId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -55,13 +60,23 @@ export default function PassengersPage() {
   const [deleting, setDeleting] = useState(false);
 
   const fetchData = () => {
-    fetch(`/api/passengers?q=${debouncedSearch}`, { cache: "no-store" })
+    setLoading(true);
+    fetch(`/api/passengers?q=${debouncedSearch}&page=${page}`, { cache: "no-store" })
       .then((r) => r.json())
-      .then((data) => setPassengers(Array.isArray(data) ? data : []))
+      .then((data) => {
+        if (data && Array.isArray(data.passengers)) {
+          setPassengers(data.passengers);
+          setTotalPages(data.totalPages || 1);
+          setTotal(data.total || 0);
+        } else {
+          setPassengers([]);
+        }
+      })
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(); }, [debouncedSearch]);
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
+  useEffect(() => { fetchData(); }, [debouncedSearch, page]);
 
   const openCreate = () => {
     setEditId(null);
@@ -160,15 +175,9 @@ export default function PassengersPage() {
       });
 
       if (res.ok) {
-        const saved = await res.json();
-        setPassengers((prev) => {
-          if (editId) {
-            return prev.map((p) => (p.id === editId ? saved : p));
-          }
-          return [saved, ...prev];
-        });
         toast(editId ? "Passenger updated successfully" : "Passenger added successfully", "success");
         setModalOpen(false);
+        fetchData(); // refresh current page
       } else {
         const err = await res.json().catch(() => ({}));
         toast(err.error || "Failed to save passenger", "error");
@@ -383,6 +392,59 @@ export default function PassengersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+          <span>
+            Showing {((page - 1) * 10) + 1}–{Math.min(page * 10, total)} of {total} passengers
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Prev
+            </button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let p: number;
+              if (totalPages <= 7) {
+                p = i + 1;
+              } else if (page <= 4) {
+                p = i + 1;
+              } else if (page >= totalPages - 3) {
+                p = totalPages - 6 + i;
+              } else {
+                p = page - 3 + i;
+              }
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  className={`inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    p === page
+                      ? "border-indigo-500 bg-indigo-600 text-white"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit Passenger Modal (Clean, No Notes) */}
       <Modal

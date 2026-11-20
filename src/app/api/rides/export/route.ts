@@ -17,34 +17,37 @@ function formatDestination(pickup: string | null | undefined, destination: strin
   return p || d || "-";
 }
 
+/** Format date as DD-MM-YY */
+function formatDateDDMMYY(date: Date): string {
+  const dd = String(date.getUTCDate()).padStart(2, "0");
+  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const yy = String(date.getUTCFullYear()).slice(2);
+  return `${dd}-${mm}-${yy}`;
+}
+
+/** Extract the 1700+ sequential Kashaf ID from the snapshot ride_number field.
+ *  The ride_number stored in snapshot looks like: "SXA - 726620261113001706"
+ *  The last 6 digits are the sequence number (1706 → display as 1706).
+ *  Falls back to the rideNumber string if no kashaf doc exists. */
 function getKashafId(ride: {
   id: string;
   rideNumber: string;
   kashafDocuments?: Array<{ snapshot: unknown }>;
 }): string {
-  // If kashaf document exists, check snapshot for ride_number sequence
   const doc = ride.kashafDocuments?.[0];
   if (doc?.snapshot && typeof doc.snapshot === "object") {
     const s = doc.snapshot as Record<string, any>;
     const rNum = s?.ride?.ride_number;
     if (rNum && typeof rNum === "string") {
+      // Pattern: "SXA - 726620261113001706" — last 6 digits are seq
       const m = rNum.match(/(\d{4,6})$/);
       if (m) {
-        return String(parseInt(m[1], 10));
+        return String(parseInt(m[1], 10)); // e.g. "1706"
       }
-      return rNum;
     }
   }
-
-  // If rideNumber has a sequence or number
-  if (ride.rideNumber) {
-    const m = ride.rideNumber.match(/(\d{4,6})$/);
-    if (m && !ride.rideNumber.startsWith("R-")) {
-      return String(parseInt(m[1], 10));
-    }
-    return ride.rideNumber;
-  }
-  return String(ride.id).slice(-4);
+  // No kashaf doc — just return the ride number as-is
+  return ride.rideNumber || String(ride.id).slice(-6);
 }
 
 export async function GET(request: NextRequest) {
@@ -146,7 +149,7 @@ export async function GET(request: NextRequest) {
 
   rides.forEach((ride, index) => {
     const kashafId = getKashafId(ride);
-    const dateFormatted = ride.date ? ride.date.toISOString().slice(0, 10) : "";
+    const dateFormatted = ride.date ? formatDateDDMMYY(ride.date) : "";
     const destinationCombined = formatDestination(ride.pickup, ride.destination);
     const driverName = ride.driver?.name || (ride.driverSnapshot as any)?.name || "-";
     const vehiclePlate = ride.vehicle?.plateNumber || (ride.vehicleSnapshot as any)?.plateNumber || "-";

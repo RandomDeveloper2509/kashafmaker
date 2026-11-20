@@ -49,6 +49,14 @@ const statusDot = (status: string): "success" | "info" | "danger" | "warning" =>
 
 const PAGE_SIZE = 8;
 
+/** Returns local YYYY-MM-DD (no UTC shift) */
+function localDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export default function RidesPage() {
   const { toast } = useToast();
   const [rides, setRides] = useState<Ride[]>([]);
@@ -66,9 +74,12 @@ export default function RidesPage() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportStartDate, setExportStartDate] = useState(() => {
     const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+    // Use local date to avoid UTC offset shifting the date
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}-01`;
   });
-  const [exportEndDate, setExportEndDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [exportEndDate, setExportEndDate] = useState(() => localDateStr(new Date()));
   const [isExporting, setIsExporting] = useState(false);
 
   const fetchRides = () => {
@@ -453,6 +464,11 @@ export default function RidesPage() {
                 onChange={(e) => setExportStartDate(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
+              {exportStartDate && (
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  {exportStartDate.split("-").reverse().join("-")}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -464,6 +480,11 @@ export default function RidesPage() {
                 onChange={(e) => setExportEndDate(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
+              {exportEndDate && (
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  {exportEndDate.split("-").reverse().join("-")}
+                </p>
+              )}
             </div>
           </div>
 
@@ -473,8 +494,7 @@ export default function RidesPage() {
             <button
               type="button"
               onClick={() => {
-                const now = new Date();
-                const d = now.toISOString().slice(0, 10);
+                const d = localDateStr(new Date());
                 setExportStartDate(d);
                 setExportEndDate(d);
               }}
@@ -488,8 +508,8 @@ export default function RidesPage() {
                 const end = new Date();
                 const start = new Date();
                 start.setDate(end.getDate() - 7);
-                setExportStartDate(start.toISOString().slice(0, 10));
-                setExportEndDate(end.toISOString().slice(0, 10));
+                setExportStartDate(localDateStr(start));
+                setExportEndDate(localDateStr(end));
               }}
               className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
             >
@@ -500,8 +520,8 @@ export default function RidesPage() {
               onClick={() => {
                 const now = new Date();
                 const first = new Date(now.getFullYear(), now.getMonth(), 1);
-                setExportStartDate(first.toISOString().slice(0, 10));
-                setExportEndDate(now.toISOString().slice(0, 10));
+                setExportStartDate(localDateStr(first));
+                setExportEndDate(localDateStr(now));
               }}
               className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
             >
@@ -513,8 +533,8 @@ export default function RidesPage() {
                 const now = new Date();
                 const end = new Date(now.getFullYear(), now.getMonth(), 0);
                 const start = new Date(end.getFullYear(), end.getMonth(), 1);
-                setExportStartDate(start.toISOString().slice(0, 10));
-                setExportEndDate(end.toISOString().slice(0, 10));
+                setExportStartDate(localDateStr(start));
+                setExportEndDate(localDateStr(end));
               }}
               className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
             >

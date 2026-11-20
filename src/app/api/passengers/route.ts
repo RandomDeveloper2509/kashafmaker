@@ -9,26 +9,33 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") || "";
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const pageSize = 10;
 
-  const passengers = await prisma.passenger.findMany({
-    where: query
-      ? {
-          OR: [
-            { fullName: { contains: query, mode: "insensitive" } },
-            { passportNumber: { contains: query, mode: "insensitive" } },
-            { nationality: { contains: query, mode: "insensitive" } },
-          ],
-        }
-      : {},
-    orderBy: { fullName: "asc" },
-    take: 300,
-  });
+  const where = query
+    ? {
+        OR: [
+          { fullName: { contains: query, mode: "insensitive" as const } },
+          { passportNumber: { contains: query, mode: "insensitive" as const } },
+          { nationality: { contains: query, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
 
-  return NextResponse.json(passengers, {
-    headers: {
-      "Cache-Control": "no-store, must-revalidate",
-    },
-  });
+  const [passengers, total] = await Promise.all([
+    prisma.passenger.findMany({
+      where,
+      orderBy: { fullName: "asc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.passenger.count({ where }),
+  ]);
+
+  return NextResponse.json(
+    { passengers, total, page, pageSize, totalPages: Math.ceil(total / pageSize) },
+    { headers: { "Cache-Control": "no-store, must-revalidate" } }
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -50,6 +57,18 @@ export async function POST(request: NextRequest) {
       notes: null,
     };
     const data = passengerSchema.parse(cleaned);
+
+    // If a passport number is provided, check if this passenger already exists
+    if (data.passportNumber) {
+      const existing = await prisma.passenger.findFirst({
+        where: { passportNumber: { equals: data.passportNumber, mode: "insensitive" } },
+      });
+      if (existing) {
+        // Return the existing record instead of creating a duplicate
+        return NextResponse.json(existing, { status: 200 });
+      }
+    }
+
     const passenger = await prisma.passenger.create({ data });
     return NextResponse.json(passenger, { status: 201 });
   } catch (error) {
