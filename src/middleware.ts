@@ -17,8 +17,16 @@ export default auth((req) => {
   // Allow API routes to be handled by their own auth logic
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
-  // Allow static files
-  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon") || pathname.startsWith("/static")) {
+  // Allow static files, PWA assets and public media
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname.startsWith("/static") ||
+    pathname.startsWith("/icons") ||
+    pathname === "/manifest.json" ||
+    pathname === "/sw.js" ||
+    pathname.match(/\.(png|jpg|jpeg|svg|ico|webp|json|js|woff|woff2|ttf)$/)
+  ) {
     return NextResponse.next();
   }
 
@@ -47,5 +55,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.json|sw\\.js|icons|.*\\.(?:png|jpg|jpeg|svg|ico|webp|woff|woff2|ttf)$|api/auth).*)",
+  ],
 };
