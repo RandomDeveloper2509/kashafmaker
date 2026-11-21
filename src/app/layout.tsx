@@ -34,6 +34,25 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.__pwaPrompt = null;
+              window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                window.__pwaPrompt = e;
+                window.dispatchEvent(new Event('pwa-prompt-ready'));
+              });
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full antialiased">
         <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>

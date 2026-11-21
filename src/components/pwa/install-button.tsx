@@ -35,6 +35,7 @@ export function usePWAInstall() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [deviceType, setDeviceType] = useState<"desktop" | "android" | "ios">("desktop");
   const [mounted, setMounted] = useState(false);
+  const [promptReady, setPromptReady] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -59,36 +60,47 @@ export function usePWAInstall() {
       setDeviceType("desktop");
     }
 
-    // Register service worker if supported
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .catch((err) => console.log("SW register notice:", err));
+    // Check if prompt was already captured by early <head> script
+    if (typeof window !== "undefined" && (window as unknown as { __pwaPrompt?: BeforeInstallPromptEvent }).__pwaPrompt) {
+      setPromptReady(true);
     }
+
+    const handlePromptReady = () => {
+      setPromptReady(true);
+    };
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      globalDeferredPrompt = e as BeforeInstallPromptEvent;
+      (window as unknown as { __pwaPrompt?: BeforeInstallPromptEvent }).__pwaPrompt = e as BeforeInstallPromptEvent;
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setPromptReady(true);
     };
 
     const handleAppInstalled = () => {
       setIsStandalone(true);
       setDeferredPrompt(null);
-      globalDeferredPrompt = null;
+      if (typeof window !== "undefined") {
+        (window as unknown as { __pwaPrompt?: null }).__pwaPrompt = null;
+      }
     };
 
+    window.addEventListener("pwa-prompt-ready", handlePromptReady);
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
+      window.removeEventListener("pwa-prompt-ready", handlePromptReady);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);
 
   const triggerInstall = async (onShowFallbackGuide?: () => void) => {
-    const promptToUse = deferredPrompt || globalDeferredPrompt;
+    const promptToUse =
+      (typeof window !== "undefined"
+        ? (window as unknown as { __pwaPrompt?: BeforeInstallPromptEvent }).__pwaPrompt
+        : null) || deferredPrompt || globalDeferredPrompt;
+
     if (promptToUse) {
       try {
         await promptToUse.prompt();
@@ -97,6 +109,9 @@ export function usePWAInstall() {
           setIsStandalone(true);
           setDeferredPrompt(null);
           globalDeferredPrompt = null;
+          if (typeof window !== "undefined") {
+            (window as unknown as { __pwaPrompt?: null }).__pwaPrompt = null;
+          }
         }
       } catch (err) {
         console.error("Install prompt error:", err);
@@ -113,7 +128,7 @@ export function usePWAInstall() {
     mounted,
     isStandalone,
     deviceType,
-    hasPrompt: !!deferredPrompt || !!globalDeferredPrompt,
+    hasPrompt: promptReady || !!deferredPrompt || !!globalDeferredPrompt,
     triggerInstall,
   };
 }
