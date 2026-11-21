@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Car } from "lucide-react";
+import { InstallAppButton } from "@/components/pwa/install-button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -96,7 +97,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-
+          <div className="mt-6 flex justify-center">
+            <InstallAppButton variant="minimal" />
+          </div>
         </div>
       </div>
     </div>

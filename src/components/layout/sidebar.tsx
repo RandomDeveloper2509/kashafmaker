@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { InstallAppButton } from "@/components/pwa/install-button";
 
 const navigation = [
   {
@@ -127,6 +128,11 @@ export function Sidebar({ userName }: { userName?: string }) {
           </div>
         ))}
       </nav>
+
+      {/* PWA Install Button */}
+      <div className="shrink-0 px-3 pb-2">
+        <InstallAppButton variant="sidebar" />
+      </div>
 
       {/* User footer */}
       <div className="shrink-0 border-t border-slate-100 p-3">
