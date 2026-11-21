@@ -3,7 +3,7 @@
   "name": "Rihal Next - Transport Management",
   "short_name": "Rihal Next",
   "description": "Smarter Journeys. Seamless Operations.",
-  "start_url": "/dashboard",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

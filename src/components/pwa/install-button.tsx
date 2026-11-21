@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Smartphone, Monitor, X, Share2, PlusSquare, Sparkles, CheckCircle2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import {
+  Download,
+  Smartphone,
+  Monitor,
+  X,
+  Share2,
+  PlusSquare,
+  MoreVertical,
+  Laptop,
+  CheckCircle2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +21,6 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
-// Module-level variable to store early beforeinstallprompt event
 let globalDeferredPrompt: BeforeInstallPromptEvent | null = null;
 
 if (typeof window !== "undefined") {
@@ -29,7 +39,7 @@ export function usePWAInstall() {
   useEffect(() => {
     setMounted(true);
 
-    // Check if running in standalone mode (already installed & opened as app)
+    // Check if already running in standalone mode (already installed & opened as app)
     const isStandaloneMode =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
@@ -56,7 +66,6 @@ export function usePWAInstall() {
         .catch((err) => console.log("SW register notice:", err));
     }
 
-    // Event listener for prompt if not captured yet
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       globalDeferredPrompt = e as BeforeInstallPromptEvent;
@@ -94,7 +103,6 @@ export function usePWAInstall() {
         if (onShowFallbackGuide) onShowFallbackGuide();
       }
     } else {
-      // Browser didn't expose native dialog directly; show friendly guide
       if (onShowFallbackGuide) {
         onShowFallbackGuide();
       }
@@ -135,6 +143,215 @@ export function InstallAppButton({
   const handleClick = () => {
     triggerInstall(() => setShowModal(true));
   };
+
+  const modalContent = showModal && typeof document !== "undefined" ? (
+    createPortal(
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div
+          className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Rihal Next" className="h-10 w-10 rounded-full shadow-xs object-contain" />
+              <div>
+                <h3 className="font-bold text-slate-900 text-lg leading-tight">Install Rihal Next</h3>
+                <p className="text-xs text-slate-500">Run as a standalone app on your PC or phone</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowModal(false)}
+              className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Platform Tabs */}
+          <div className="mt-5 grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 text-xs font-semibold text-slate-600">
+            <button
+              type="button"
+              onClick={() => setActiveTab("desktop")}
+              className={cn(
+                "flex items-center justify-center gap-1.5 py-2 rounded-lg transition-all cursor-pointer",
+                activeTab === "desktop" ? "bg-white text-indigo-700 shadow-sm font-bold" : "hover:text-slate-900"
+              )}
+            >
+              <Monitor className="h-4 w-4 shrink-0" />
+              <span>PC / Laptop</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("android")}
+              className={cn(
+                "flex items-center justify-center gap-1.5 py-2 rounded-lg transition-all cursor-pointer",
+                activeTab === "android" ? "bg-white text-indigo-700 shadow-sm font-bold" : "hover:text-slate-900"
+              )}
+            >
+              <Smartphone className="h-4 w-4 shrink-0" />
+              <span>Android</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("ios")}
+              className={cn(
+                "flex items-center justify-center gap-1.5 py-2 rounded-lg transition-all cursor-pointer",
+                activeTab === "ios" ? "bg-white text-indigo-700 shadow-sm font-bold" : "hover:text-slate-900"
+              )}
+            >
+              <Share2 className="h-4 w-4 shrink-0" />
+              <span>iPhone</span>
+            </button>
+          </div>
+
+          {/* Tab 1: PC / Laptop */}
+          {activeTab === "desktop" && (
+            <div className="mt-4 space-y-3">
+              <p className="text-xs font-medium text-slate-600">
+                In <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on Windows/Mac:
+              </p>
+
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 space-y-3 text-xs text-slate-700">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[11px]">
+                    1
+                  </span>
+                  <div>
+                    <span className="font-semibold text-slate-900">Through Browser Menu (Easiest):</span>
+                    <p className="text-slate-600 mt-0.5">
+                      Click the <strong>three dots (⋮)</strong> at the very top-right of your browser window &rarr; select <strong>&quot;Install Rihal Next...&quot;</strong> (or <em>&quot;Save and share&quot; &rarr; &quot;Install Rihal Next&quot;</em>).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-indigo-100/80 pt-2.5 flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[11px]">
+                    2
+                  </span>
+                  <div>
+                    <span className="font-semibold text-slate-900">Or through the URL Address Bar:</span>
+                    <p className="text-slate-600 mt-0.5">
+                      Look at the right side inside your URL address bar (near the star bookmark icon). Click the <strong>Install computer icon</strong> (🖥️ or ⊕).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-indigo-100/80 pt-2.5 flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-[11px]">
+                    ✓
+                  </span>
+                  <div>
+                    <span className="font-semibold text-slate-900">Click Install:</span>
+                    <p className="text-slate-600 mt-0.5">
+                      A desktop shortcut will be created and the panel will open in its own clean window without browser tabs!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Android */}
+          {activeTab === "android" && (
+            <div className="mt-4 space-y-3">
+              <p className="text-xs font-medium text-slate-600">
+                In <strong>Chrome</strong> on your Android phone or tablet:
+              </p>
+
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 space-y-3 text-xs text-slate-700">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[11px]">
+                    1
+                  </span>
+                  <div>
+                    <p className="text-slate-600">
+                      Tap the <strong>three dots (⋮)</strong> menu in the top-right corner of Chrome.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-indigo-100/80 pt-2.5 flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[11px]">
+                    2
+                  </span>
+                  <div>
+                    <p className="text-slate-600">
+                      Tap <strong>&quot;Install app&quot;</strong> or <strong>&quot;Add to Home screen&quot;</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-indigo-100/80 pt-2.5 flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-[11px]">
+                    ✓
+                  </span>
+                  <div>
+                    <p className="text-slate-600">
+                      Confirm <strong>Install</strong>. The Rihal Next app icon will be added directly to your home screen and app drawer!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: iOS */}
+          {activeTab === "ios" && (
+            <div className="mt-4 space-y-3">
+              <p className="text-xs font-medium text-slate-600">
+                In <strong>Safari</strong> on iPhone or iPad:
+              </p>
+
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 space-y-3 text-xs text-slate-700">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[11px]">
+                    1
+                  </span>
+                  <div>
+                    <p className="text-slate-600">
+                      Tap the <strong className="inline-flex items-center gap-1 text-slate-900"><Share2 className="h-3.5 w-3.5 text-blue-500 inline" /> Share</strong> button in Safari&apos;s bottom toolbar.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-indigo-100/80 pt-2.5 flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[11px]">
+                    2
+                  </span>
+                  <div>
+                    <p className="text-slate-600">
+                      Scroll down and tap <strong className="inline-flex items-center gap-1 text-slate-900"><PlusSquare className="h-3.5 w-3.5 inline" /> Add to Home Screen</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-indigo-100/80 pt-2.5 flex items-start gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-[11px]">
+                    ✓
+                  </span>
+                  <div>
+                    <p className="text-slate-600">
+                      Tap <strong>Add</strong> at top right. The app will be installed on your home screen!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Close button */}
+          <Button
+            className="mt-5 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-10 rounded-xl cursor-pointer shadow-sm"
+            onClick={() => setShowModal(false)}
+          >
+            Got it
+          </Button>
+        </div>
+      </div>,
+      document.body
+    )
+  ) : null;
 
   return (
     <>
@@ -185,179 +402,7 @@ export function InstallAppButton({
         </Button>
       )}
 
-      {/* Install Guide Modal (for when native browser prompt requires manual trigger or iOS) */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Rihal Next" className="h-9 w-9 rounded-full shadow-xs" />
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base leading-tight">Install Rihal Next</h3>
-                  <p className="text-[11px] text-slate-500">Access like a native app on PC or Mobile</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Platform Selector Tabs */}
-            <div className="mt-4 flex rounded-lg bg-slate-100 p-1 text-xs font-semibold text-slate-600">
-              <button
-                type="button"
-                onClick={() => setActiveTab("desktop")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-all cursor-pointer",
-                  activeTab === "desktop" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-slate-900"
-                )}
-              >
-                <Monitor className="h-3.5 w-3.5" />
-                <span>PC / Laptop</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("android")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-all cursor-pointer",
-                  activeTab === "android" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-slate-900"
-                )}
-              >
-                <Smartphone className="h-3.5 w-3.5" />
-                <span>Android</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("ios")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md transition-all cursor-pointer",
-                  activeTab === "ios" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-slate-900"
-                )}
-              >
-                <Share2 className="h-3.5 w-3.5" />
-                <span>iPhone / iPad</span>
-              </button>
-            </div>
-
-            {/* Tab 1: PC / Laptop */}
-            {activeTab === "desktop" && (
-              <div className="mt-4 space-y-3 text-xs text-slate-700">
-                <p className="text-slate-600 text-xs font-medium">
-                  In Chrome or Edge on Windows / Mac:
-                </p>
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 space-y-2.5">
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      1
-                    </span>
-                    <span>
-                      Look at the <strong>right side of your URL address bar</strong> at the top.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      2
-                    </span>
-                    <span>
-                      Click the <strong>Install icon</strong> (🖥️ or ⊕) or click browser menu (<strong>⋮</strong>) → <strong>Install Rihal Next</strong>.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      3
-                    </span>
-                    <span>
-                      Click <strong>Install</strong>. It creates a desktop icon and opens in its own clean window!
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 2: Android */}
-            {activeTab === "android" && (
-              <div className="mt-4 space-y-3 text-xs text-slate-700">
-                <p className="text-slate-600 text-xs font-medium">
-                  In Chrome on your Android phone:
-                </p>
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 space-y-2.5">
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      1
-                    </span>
-                    <span>
-                      Tap the <strong>three dots (⋮)</strong> menu in the top-right corner of Chrome.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      2
-                    </span>
-                    <span>
-                      Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      3
-                    </span>
-                    <span>
-                      Confirm <strong>Install</strong>. The Rihal Next app icon will appear on your phone home screen!
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 3: iOS */}
-            {activeTab === "ios" && (
-              <div className="mt-4 space-y-3 text-xs text-slate-700">
-                <p className="text-slate-600 text-xs font-medium">
-                  In Safari on iPhone or iPad:
-                </p>
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 space-y-2.5">
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      1
-                    </span>
-                    <span>
-                      Tap the <strong className="inline-flex items-center gap-1 text-slate-900"><Share2 className="h-3.5 w-3.5 text-blue-500 inline" /> Share</strong> button in Safari's bottom bar.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      2
-                    </span>
-                    <span>
-                      Scroll down and tap <strong className="inline-flex items-center gap-1 text-slate-900"><PlusSquare className="h-3.5 w-3.5 inline" /> Add to Home Screen</strong>.
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[10px]">
-                      3
-                    </span>
-                    <span>
-                      Tap <strong>Add</strong> at top right. The app icon will be added to your home screen!
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Close Button */}
-            <Button
-              className="mt-5 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs h-9 cursor-pointer"
-              onClick={() => setShowModal(false)}
-            >
-              Got it
-            </Button>
-          </div>
-        </div>
-      )}
+      {modalContent}
     </>
   );
 }
