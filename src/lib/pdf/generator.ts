@@ -791,8 +791,8 @@ export async function generateKashafPdf(
         const arabicLabel = "رقم الكشف:";
         const labelWidth = arabicFont.widthOfTextAtSize(arabicLabel, fontSize);
 
-        // Total block aligned to right margin of passenger table (x ~ 588)
-        const rightMargin = 588;
+        // Total block aligned to right margin of passenger table (right edge = 18.24 + 573.22 = 591.46)
+        const rightMargin = 591;
         const totalWidth = idWidth + 6 + labelWidth;
         const startX = rightMargin - totalWidth;
 
@@ -815,13 +815,13 @@ export async function generateKashafPdf(
         });
       }
 
-      // Draw Prepared By on the left side of the table (x = 38, inside table bounds)
+      // Draw Prepared By on the left side of the table (x = 20, exactly at table left corner 18.24)
       const preparedBy = (context.prepared_by || "").trim();
       if (preparedBy) {
         const prepStr = `Prepared By: ${preparedBy}`;
         const prepFont = containsArabic(preparedBy) ? arabicFont : helveticaFont;
         p2.drawText(prepStr, {
-          x: 38,
+          x: 20,
           y: targetY,
           size: fontSize,
           font: prepFont,
