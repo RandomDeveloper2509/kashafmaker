@@ -160,7 +160,7 @@ export async function updateRide(id: string, data: RideInput) {
   return ride;
 }
 
-export async function generateKashafForRide(rideId: string, templateId?: string) {
+export async function generateKashafForRide(rideId: string, templateId?: string, preparedBy?: string) {
   const ride = await prisma.ride.findUnique({
     where: { id: rideId },
     include: {
@@ -265,7 +265,8 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
           capacity: vehicleSnap.capacity as number | undefined,
         }
       : null,
-    passengers
+    passengers,
+    preparedBy
   );
 
   // Generate Kashaf ID formatted as: SXA - 726420261113001685
@@ -319,6 +320,7 @@ export async function generateKashafForRide(rideId: string, templateId?: string)
     driver: context.driver,
     vehicle: context.vehicle,
     passengers: context.passengers,
+    prepared_by: context.prepared_by,
     template: {
       fieldConfig: template.fieldConfig,
       filePath: template.filePath,

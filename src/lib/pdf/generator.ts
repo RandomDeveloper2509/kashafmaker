@@ -762,9 +762,9 @@ export async function generateKashafPdf(
     await drawPassengerTable(pdfDoc, fieldConfig.passengerTable, context.passengers);
   }
 
-  // Draw Kashaf Document ID below passenger table on page 2 (bottom right, directly below last row)
+  // Draw Kashaf Document ID and Prepared By below passenger table on page 2
   const docNumber = context.ride?.ride_number; // Note: Kashaf document number or generated ID
-  if (docNumber && pages.length >= 2) {
+  if ((docNumber || context.prepared_by) && pages.length >= 2) {
     const p2 = pages[1];
     try {
       const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -782,36 +782,52 @@ export async function generateKashafPdf(
         targetY = lastRowBottom - 18; // Directly below the last row
       }
 
-      // English ID string: "SXA - 726420261113001685"
-      const idStr = String(docNumber).trim();
-      const idWidth = helveticaFont.widthOfTextAtSize(idStr, fontSize);
+      if (docNumber) {
+        // English ID string: "SXA - 726420261113001685"
+        const idStr = String(docNumber).trim();
+        const idWidth = helveticaFont.widthOfTextAtSize(idStr, fontSize);
 
-      // Clean Arabic label: "رقم الكشف:"
-      const arabicLabel = "رقم الكشف:";
-      const labelWidth = arabicFont.widthOfTextAtSize(arabicLabel, fontSize);
+        // Clean Arabic label: "رقم الكشف:"
+        const arabicLabel = "رقم الكشف:";
+        const labelWidth = arabicFont.widthOfTextAtSize(arabicLabel, fontSize);
 
-      // Total block aligned to right margin of passenger table (x ~ 574)
-      const rightMargin = 574;
-      const totalWidth = idWidth + 6 + labelWidth;
-      const startX = rightMargin - totalWidth;
+        // Total block aligned to right margin of passenger table (x ~ 574)
+        const rightMargin = 574;
+        const totalWidth = idWidth + 6 + labelWidth;
+        const startX = rightMargin - totalWidth;
 
-      // Draw English ID on the left
-      p2.drawText(idStr, {
-        x: startX,
-        y: targetY,
-        size: fontSize,
-        font: helveticaFont,
-        color: textColor,
-      });
+        // Draw English ID on the left
+        p2.drawText(idStr, {
+          x: startX,
+          y: targetY,
+          size: fontSize,
+          font: helveticaFont,
+          color: textColor,
+        });
 
-      // Draw standard "رقم الكشف:" on the right
-      p2.drawText(arabicLabel, {
-        x: startX + idWidth + 6,
-        y: targetY,
-        size: fontSize,
-        font: arabicFont,
-        color: textColor,
-      });
+        // Draw standard "رقم الكشف:" on the right
+        p2.drawText(arabicLabel, {
+          x: startX + idWidth + 6,
+          y: targetY,
+          size: fontSize,
+          font: arabicFont,
+          color: textColor,
+        });
+      }
+
+      // Draw Prepared By on the left corner of the table (x = 22, exact opposite of right side Kashaf ID)
+      const preparedBy = (context.prepared_by || "").trim();
+      if (preparedBy) {
+        const prepStr = `Prepared By: ${preparedBy}`;
+        const prepFont = containsArabic(preparedBy) ? arabicFont : helveticaFont;
+        p2.drawText(prepStr, {
+          x: 22,
+          y: targetY,
+          size: fontSize,
+          font: prepFont,
+          color: textColor,
+        });
+      }
     } catch {
       // Fallback
     }
@@ -919,5 +935,6 @@ export function getSampleContext(): KashafDataContext {
       },
     ],
     third_party: "ISLOM KARIMOV and 6 Members",
+    prepared_by: "Ali Noor",
   };
 }

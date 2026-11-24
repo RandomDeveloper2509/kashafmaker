@@ -57,7 +57,8 @@ export function buildKashafContext(
   ride: RideData,
   driver: DriverSnapshot | null,
   vehicle: VehicleSnapshot | null,
-  passengers: PassengerSnapshot[]
+  passengers: PassengerSnapshot[],
+  preparedBy?: string
 ): KashafDataContext {
   return {
     company: {
@@ -115,6 +116,7 @@ export function buildKashafContext(
     third_party: passengers.length > 0 
       ? `${passengers[0].fullName}${passengers.length > 1 ? ` and ${passengers.length - 1} Members` : ''}`
       : undefined,
+    prepared_by: preparedBy || undefined,
   };
 }
 

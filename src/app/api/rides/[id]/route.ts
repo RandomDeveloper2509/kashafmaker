@@ -80,7 +80,7 @@ export async function POST(
 
   if (action === "generate-kashaf") {
     try {
-      const document = await generateKashafForRide(id, body.templateId);
+      const document = await generateKashafForRide(id, body.templateId, session.user.name || undefined);
       return NextResponse.json(document, { status: 201 });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to generate Kashaf";

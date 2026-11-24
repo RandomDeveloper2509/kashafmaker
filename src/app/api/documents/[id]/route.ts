@@ -184,7 +184,11 @@ export async function POST(
   const { generateKashafForRide } = await import("@/services/rides");
   try {
     // Regenerate using the same templateId to preserve template choice
-    const document = await generateKashafForRide(existing.rideId, existing.templateId);
+    const document = await generateKashafForRide(
+      existing.rideId,
+      existing.templateId,
+      session.user.name || ((existing.snapshot as Record<string, unknown>)?.prepared_by as string) || undefined
+    );
     return NextResponse.json(document, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to regenerate";

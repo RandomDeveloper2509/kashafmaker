@@ -130,6 +130,7 @@ export interface KashafDataContext {
     visa_type?: string;
   }>;
   third_party?: string;
+  prepared_by?: string;
 }
 
 export const DYNAMIC_FIELDS = {
@@ -253,5 +254,9 @@ export function buildContextFromSnapshot(snapshot: Record<string, unknown>): Kas
     vehicle: (snapshot.vehicle as KashafDataContext["vehicle"]) || {},
     passengers,
     third_party: thirdParty,
+    prepared_by:
+      (snapshot.prepared_by as string) ||
+      ((snapshot.user as Record<string, unknown>)?.name as string) ||
+      undefined,
   };
 }

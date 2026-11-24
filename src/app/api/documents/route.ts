@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const document = await generateKashafForRide(body.rideId, body.templateId);
+    const document = await generateKashafForRide(body.rideId, body.templateId, session.user.name || undefined);
     return NextResponse.json(document, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to generate document";
