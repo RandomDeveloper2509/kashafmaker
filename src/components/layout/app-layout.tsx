@@ -8,6 +8,7 @@ import { Plus, ChevronRight, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToastProvider } from "@/components/ui/toast";
 import { InstallAppButton } from "@/components/pwa/install-button";
+import { WhatsNewButton } from "@/components/announcements/whats-new-modal";
 
 // Map href segments to readable labels
 const BREADCRUMB_LABELS: Record<string, string> = {
@@ -78,6 +79,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
               {/* Right actions */}
               <div className="flex items-center gap-3">
+                <WhatsNewButton />
                 <InstallAppButton variant="header" />
                 <Link href="/rides/new">
                   <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
