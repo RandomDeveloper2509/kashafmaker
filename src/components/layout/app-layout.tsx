@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { Sidebar } from "./sidebar";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -9,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { ToastProvider } from "@/components/ui/toast";
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { WhatsNewButton } from "@/components/announcements/whats-new-modal";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
-// Map href segments to readable labels
 const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   rides: "Rides",
@@ -40,17 +41,23 @@ function Breadcrumb() {
   });
 
   return (
-    <nav className="flex items-center gap-1 text-sm">
-      <Link href="/dashboard" className="text-slate-400 hover:text-slate-600 transition-colors">
+    <nav className="flex items-center gap-1.5 text-sm">
+      <Link
+        href="/dashboard"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+      >
         <Home className="h-4 w-4" />
       </Link>
       {crumbs.map((crumb) => (
-        <span key={crumb.href} className="flex items-center gap-1">
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+        <span key={crumb.href} className="flex items-center gap-1.5">
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
           {crumb.isLast ? (
-            <span className="font-medium text-slate-700">{crumb.label}</span>
+            <span className="font-medium text-foreground">{crumb.label}</span>
           ) : (
-            <Link href={crumb.href} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <Link
+              href={crumb.href}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               {crumb.label}
             </Link>
           )}
@@ -66,48 +73,57 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-slate-50 text-slate-900">
+      <SidebarProvider
+        defaultOpen
+        className="tallie-dashboard min-h-svh"
+        style={
+          {
+            "--sidebar-width": "16.5rem",
+            "--sidebar-width-icon": "4.25rem",
+          } as CSSProperties
+        }
+      >
         <Sidebar />
-        <main className="lg:pl-56">
-          {/* Top Navbar */}
-          <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
-            <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-              {/* Breadcrumb */}
-              <div className="pl-12 lg:pl-0">
-                <Breadcrumb />
-              </div>
 
-              {/* Right actions */}
-              <div className="flex items-center gap-3">
-                <WhatsNewButton />
-                <InstallAppButton variant="header" />
-                <Link href="/rides/new">
-                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                    <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-                    <span className="hidden sm:inline">New Ride</span>
-                    <span className="sm:hidden">New</span>
-                  </Button>
-                </Link>
+        <main className="flex flex-1 flex-col min-w-0 bg-background text-foreground">
+          {/* Topbar */}
+          <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-md sm:px-6">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="md:hidden h-8.5 w-8.5 rounded-lg border border-border" />
+              <Breadcrumb />
+            </div>
 
-                <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-sm">
-                    {userName.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="hidden md:block text-left">
-                    <p className="text-xs font-semibold text-slate-800 leading-tight">{userName}</p>
-                    <p className="text-[10px] font-medium text-slate-400 capitalize">
-                      {session?.user?.role?.toLowerCase() || "operator"}
-                    </p>
-                  </div>
+            <div className="flex items-center gap-2.5">
+              <WhatsNewButton />
+              <InstallAppButton variant="header" />
+              <Link href="/rides/new">
+                <Button size="sm" variant="default" className="h-8.5 rounded-lg px-3.5 shadow-xs">
+                  <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                  <span className="hidden sm:inline">New Ride</span>
+                  <span className="sm:hidden">New</span>
+                </Button>
+              </Link>
+
+              <div className="hidden sm:flex items-center gap-2 border-l border-border pl-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted text-xs font-semibold text-foreground">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden md:block text-left">
+                  <p className="text-xs font-medium text-foreground leading-tight">{userName}</p>
+                  <p className="text-[10px] font-medium text-muted-foreground capitalize">
+                    {session?.user?.role?.toLowerCase() || "operator"}
+                  </p>
                 </div>
               </div>
             </div>
           </header>
 
           {/* Page content */}
-          <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">{children}</div>
+          <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
+            {children}
+          </div>
         </main>
-      </div>
+      </SidebarProvider>
     </ToastProvider>
   );
 }

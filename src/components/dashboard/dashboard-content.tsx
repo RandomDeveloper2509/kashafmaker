@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
@@ -13,22 +13,52 @@ import {
   Calendar,
   MapPin,
   ArrowRight,
+  ArrowUpRight,
   CheckCircle2,
   Clock,
   Download,
   ScanSearch,
+  SlidersHorizontal,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
-  StatCard,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  Badge,
-  LoadingSpinner,
-  StatusDot,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+interface TodayRide {
+  id: string;
+  rideNumber: string;
+  time: string;
+  pickup: string;
+  destination: string;
+  status: string;
+  driver: { name: string } | null;
+  vehicle: { make: string; model: string; plateNumber: string } | null;
+  kashafDocuments: Array<{ id: string }>;
+  _count: { passengers: number };
+}
 
 interface DashboardData {
   totalRides: number;
@@ -39,18 +69,7 @@ interface DashboardData {
   totalVehicles: number;
   totalPassengers: number;
   kashafDocuments: number;
-  todayRidesList: Array<{
-    id: string;
-    rideNumber: string;
-    time: string;
-    pickup: string;
-    destination: string;
-    status: string;
-    driver: { name: string } | null;
-    vehicle: { make: string; model: string; plateNumber: string } | null;
-    kashafDocuments: Array<{ id: string }>;
-    _count: { passengers: number };
-  }>;
+  todayRidesList: TodayRide[];
 }
 
 function getGreeting() {
@@ -59,24 +78,6 @@ function getGreeting() {
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
-
-const statusVariant = (status: string) => {
-  switch (status) {
-    case "COMPLETED": return "success" as const;
-    case "IN_PROGRESS": return "info" as const;
-    case "CANCELLED": return "danger" as const;
-    default: return "warning" as const;
-  }
-};
-
-const statusDot = (status: string): "success" | "info" | "danger" | "warning" => {
-  switch (status) {
-    case "COMPLETED": return "success";
-    case "IN_PROGRESS": return "info";
-    case "CANCELLED": return "danger";
-    default: return "warning";
-  }
-};
 
 const DEFAULT_DASHBOARD_DATA: DashboardData = {
   totalRides: 0,
@@ -90,10 +91,49 @@ const DEFAULT_DASHBOARD_DATA: DashboardData = {
   todayRidesList: [],
 };
 
+const STATUS_FILTERS = [
+  { value: "ALL", label: "All statuses" },
+  { value: "SCHEDULED", label: "Scheduled" },
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "CANCELLED", label: "Cancelled" },
+] as const;
+
+function getStatusDisplay(status: string) {
+  switch (status) {
+    case "COMPLETED":
+      return {
+        label: "Completed",
+        className: "text-(--status-completed)",
+        Icon: CheckCircle2,
+      };
+    case "IN_PROGRESS":
+      return {
+        label: "In Progress",
+        className: "text-(--status-processing)",
+        Icon: Loader2,
+      };
+    case "CANCELLED":
+      return {
+        label: "Cancelled",
+        className: "text-(--status-exception)",
+        Icon: AlertCircle,
+      };
+    default:
+      return {
+        label: status.replace("_", " "),
+        className: "text-amber-600",
+        Icon: Clock,
+      };
+  }
+}
+
 export function DashboardContent({ initialData }: { initialData?: DashboardData }) {
   const { data: session } = useSession();
   const [data, setData] = useState<DashboardData | null>(initialData ?? null);
   const [loading, setLoading] = useState(!initialData);
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [selectedRide, setSelectedRide] = useState<TodayRide | null>(null);
 
   const userName = session?.user?.name?.split(" ")[0] || "there";
 
@@ -114,243 +154,431 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       .finally(() => setLoading(false));
   }, [initialData]);
 
+  const current = data || DEFAULT_DASHBOARD_DATA;
+
+  const filteredRides = useMemo(() => {
+    if (statusFilter === "ALL") return current.todayRidesList;
+    return current.todayRidesList.filter((r) => r.status === statusFilter);
+  }, [current.todayRidesList, statusFilter]);
+
+  const activeFilterLabel =
+    STATUS_FILTERS.find((f) => f.value === statusFilter)?.label ?? "All statuses";
+
   if (loading && !data) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 w-64 bg-slate-200 rounded-lg" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="flex flex-col gap-8 animate-pulse">
+        <div className="h-12 w-64 rounded-lg bg-muted" />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 rounded-xl bg-slate-100 border border-slate-200" />
+            <div key={i} className="h-36 rounded-xl border bg-card" />
           ))}
         </div>
-        <div className="h-64 rounded-xl bg-slate-100 border border-slate-200" />
+        <div className="h-72 rounded-xl border bg-card" />
       </div>
     );
   }
 
-  const current = data || DEFAULT_DASHBOARD_DATA;
+  const primaryMetrics = [
+    {
+      id: "total-rides",
+      label: "Total Rides",
+      value: current.totalRides,
+      icon: Car,
+      trendValue: `${current.todayRides} today`,
+      trendLabel: "scheduled",
+      href: "/rides",
+      actionLabel: "View all rides",
+    },
+    {
+      id: "upcoming",
+      label: "Upcoming Rides",
+      value: current.upcomingRides,
+      icon: Clock,
+      trendValue: `${current.completedRides}`,
+      trendLabel: "completed overall",
+      href: "/rides",
+      actionLabel: "Open schedule",
+    },
+    {
+      id: "drivers",
+      label: "Active Drivers",
+      value: current.totalDrivers,
+      icon: Users,
+      trendValue: `${current.totalPassengers}`,
+      trendLabel: "registered passengers",
+      href: "/drivers",
+      actionLabel: "Manage drivers",
+    },
+    {
+      id: "kashaf",
+      label: "Kashaf PDFs",
+      value: current.kashafDocuments,
+      icon: FileText,
+      trendValue: `${current.totalVehicles}`,
+      trendLabel: "fleet vehicles",
+      href: "/documents",
+      actionLabel: "View documents",
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{getGreeting()},</p>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{userName} 👋</h1>
+    <div className="flex flex-col gap-9">
+      {/* Tallie Hero Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium text-muted-foreground">{getGreeting()}, {userName}</p>
+          <h1 className="font-serif text-3xl leading-snug tracking-tight text-foreground">
+            Rihal Next Operations
+          </h1>
+          <p className="text-base text-muted-foreground">
+            Real-time overview of rides, fleet readiness, and Kashaf manifests
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-(--live)/10 px-3.5 py-2 text-xs font-medium text-(--live)">
+            <span className="size-2 rounded-full bg-(--live) live-dot-pulse" />
+            Live
+          </span>
+
           <Link href="/rides/new">
-            <Button size="sm">
-              <Plus className="h-3.5 w-3.5" /> New Ride
+            <Button variant="default" className="h-9.5 gap-1.5 rounded-lg px-3.5">
+              <Plus className="size-4" />
+              New Ride
             </Button>
           </Link>
+
           <Link href="/passengers">
-            <Button size="sm" variant="outline">
-              <ScanSearch className="h-3.5 w-3.5" /> Scan Visa
+            <Button variant="outline" className="h-9.5 gap-1.5 rounded-lg px-3.5 shadow-xs">
+              <ScanSearch className="size-4" />
+              Scan Visa
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Rides"
-          value={current.totalRides}
-          icon={Car}
-          trend={`${current.todayRides} today`}
-          href="/rides"
-          actionLabel="View all rides"
-          color="indigo"
-        />
-        <StatCard
-          title="Upcoming"
-          value={current.upcomingRides}
-          icon={Clock}
-          trend="Scheduled"
-          href="/rides"
-          color="blue"
-        />
-        <StatCard
-          title="Active Drivers"
-          value={current.totalDrivers}
-          icon={Users}
-          href="/drivers"
-          actionLabel="Manage drivers"
-          color="emerald"
-        />
-        <StatCard
-          title="Vehicles"
-          value={current.totalVehicles}
-          icon={Truck}
-          href="/vehicles"
-          actionLabel="Manage fleet"
-          color="amber"
-        />
-      </div>
-
-      {/* Second row stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Passengers"
-          value={current.totalPassengers}
-          icon={UserCircle}
-          href="/passengers"
-          color="violet"
-        />
-        <StatCard
-          title="Completed Rides"
-          value={current.completedRides}
-          icon={CheckCircle2}
-          color="emerald"
-        />
-        <StatCard
-          title="Kashaf PDFs"
-          value={current.kashafDocuments}
-          icon={FileText}
-          href="/documents"
-          actionLabel="View documents"
-          color="indigo"
-        />
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white flex flex-col items-center justify-center p-4 gap-2 text-center">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Quick Add</p>
-          <Link href="/passengers">
-            <Button size="xs" variant="outline" className="w-full">
-              <Plus className="h-3 w-3" /> Passenger
-            </Button>
-          </Link>
-          <Link href="/drivers">
-            <Button size="xs" variant="outline" className="w-full">
-              <Plus className="h-3 w-3" /> Driver
-            </Button>
-          </Link>
+      {/* Metrics Grid */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-medium tracking-tight">Metrics</h2>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/passengers"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              + Add Passenger
+            </Link>
+            <span className="text-border">•</span>
+            <Link
+              href="/drivers"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              + Add Driver
+            </Link>
+          </div>
         </div>
-      </div>
 
-      {/* Today's rides */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Today&apos;s Rides</CardTitle>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {primaryMetrics.map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <Link
+                key={metric.id}
+                href={metric.href}
+                className="group flex h-36 flex-col justify-between rounded-xl border border-border bg-zinc-50 p-4 transition-colors hover:bg-muted/60 dark:bg-card"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon className="size-4.5 text-muted-foreground" />
+                    <span className="text-sm font-medium tracking-tight text-foreground">
+                      {metric.label}
+                    </span>
+                  </div>
+                  <ArrowUpRight className="size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-foreground" />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <p className="text-3xl leading-none font-medium tracking-tight text-foreground">
+                    {metric.value}
+                  </p>
+                  <div className="flex items-center gap-1 text-xs">
+                    <ArrowUpRight className="size-3.5 text-(--trend)" />
+                    <span className="font-medium text-foreground">{metric.trendValue}</span>
+                    <span className="text-muted-foreground">{metric.trendLabel}</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Today's Rides Table */}
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-medium tracking-tight">Today&apos;s Rides</h2>
+              <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {filteredRides.length}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
             </p>
           </div>
-          <Link href="/rides" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
-            View all <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </CardHeader>
-        <CardContent className="p-0">
-          {current.todayRidesList.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Calendar className="h-10 w-10 text-slate-200 mb-3" />
-              <p className="text-sm font-medium text-slate-500">No rides scheduled today</p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                <Link href="/rides/new" className="text-indigo-600 hover:underline">Create a ride</Link> to get started
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                      Ride
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                      Route
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden md:table-cell">
-                      Driver
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden lg:table-cell">
-                      Vehicle
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                      Status
-                    </th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {current.todayRidesList.map((ride) => {
-                    const hasKashaf = ride.kashafDocuments.length > 0;
-                    const kashafDocId = ride.kashafDocuments[0]?.id;
-                    return (
-                      <tr key={ride.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-5 py-3.5">
-                          <div>
-                            <p className="font-semibold text-slate-900 text-xs">{ride.rideNumber}</p>
-                            <p className="text-slate-400 text-[11px]">{ride._count.passengers} pax</p>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-1.5 text-slate-700 text-xs">
-                            <MapPin className="h-3 w-3 text-slate-300 shrink-0" />
-                            <span className="font-medium truncate max-w-[100px]">{ride.pickup}</span>
-                            <ArrowRight className="h-3 w-3 text-slate-300 shrink-0" />
-                            <span className="truncate max-w-[100px]">{ride.destination}</span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 hidden md:table-cell">
-                          {ride.driver?.name ? (
-                            <div className="flex items-center gap-2">
-                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700 shrink-0">
-                                {ride.driver.name.charAt(0)}
-                              </div>
-                              <span className="text-xs font-medium text-slate-700 truncate max-w-[100px]">
-                                {ride.driver.name}
-                              </span>
+
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                type="button"
+                className={buttonVariants({
+                  variant: "outline",
+                  className: "h-8.5 gap-1.5 rounded-lg px-3.5 shadow-xs",
+                })}
+              >
+                {statusFilter === "ALL" ? "Filter" : activeFilterLabel}
+                <SlidersHorizontal className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="tallie-dashboard w-48">
+                <DropdownMenuRadioGroup
+                  value={statusFilter}
+                  onValueChange={setStatusFilter}
+                >
+                  {STATUS_FILTERS.map((filter) => (
+                    <DropdownMenuRadioItem key={filter.value} value={filter.value}>
+                      {filter.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Link
+              href="/rides"
+              className={buttonVariants({
+                variant: "outline",
+                className: "h-8.5 gap-1.5 rounded-lg px-3.5 shadow-xs",
+              })}
+            >
+              View all
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {filteredRides.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-zinc-50/50 py-14 text-center dark:bg-card/50">
+            <Calendar className="mb-3 size-9 text-muted-foreground/40" />
+            <p className="text-sm font-medium text-foreground">No rides scheduled today</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              <Link href="/rides/new" className="font-medium text-foreground underline underline-offset-4">
+                Create a ride
+              </Link>{" "}
+              to get started
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-border bg-background">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground dark:bg-card">
+                    Ride
+                  </TableHead>
+                  <TableHead className="h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground dark:bg-card">
+                    Route
+                  </TableHead>
+                  <TableHead className="hidden h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground md:table-cell dark:bg-card">
+                    Driver
+                  </TableHead>
+                  <TableHead className="hidden h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground lg:table-cell dark:bg-card">
+                    Vehicle
+                  </TableHead>
+                  <TableHead className="h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground dark:bg-card">
+                    Status
+                  </TableHead>
+                  <TableHead className="h-11 bg-zinc-50 px-4 text-right text-xs font-medium tracking-tight text-muted-foreground dark:bg-card">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRides.map((ride) => {
+                  const hasKashaf = ride.kashafDocuments.length > 0;
+                  const kashafDocId = ride.kashafDocuments[0]?.id;
+                  const statusInfo = getStatusDisplay(ride.status);
+                  const StatusIcon = statusInfo.Icon;
+
+                  return (
+                    <TableRow
+                      key={ride.id}
+                      onClick={() => setSelectedRide(ride)}
+                      className="cursor-pointer transition-colors hover:bg-muted/40"
+                    >
+                      <TableCell className="px-4 py-3.5">
+                        <div>
+                          <p className="font-mono text-xs font-medium text-foreground">
+                            {ride.rideNumber}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {ride._count.passengers} pax • {ride.time || "—"}
+                          </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3.5">
+                        <div className="flex items-center gap-1.5 text-xs text-foreground">
+                          <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+                          <span className="max-w-[120px] truncate font-medium">{ride.pickup}</span>
+                          <ArrowRight className="size-3 shrink-0 text-muted-foreground" />
+                          <span className="max-w-[120px] truncate">{ride.destination}</span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="hidden px-4 py-3.5 md:table-cell">
+                        {ride.driver?.name ? (
+                          <div className="flex items-center gap-2">
+                            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+                              {ride.driver.name.charAt(0)}
                             </div>
-                          ) : (
-                            <span className="text-xs text-slate-400 italic">Unassigned</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-3.5 hidden lg:table-cell">
-                          {ride.vehicle ? (
-                            <div className="text-xs">
-                              <p className="font-medium text-slate-700">{ride.vehicle.make} {ride.vehicle.model}</p>
-                              <p className="text-slate-400 font-mono text-[11px]">{ride.vehicle.plateNumber}</p>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-slate-400 italic">Unassigned</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <Badge variant={statusVariant(ride.status)}>
-                            <StatusDot status={statusDot(ride.status)} />
-                            {ride.status.replace("_", " ")}
-                          </Badge>
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {hasKashaf && kashafDocId && (
-                              <a
-                                href={`/api/documents/${kashafDocId}?download=true`}
-                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                              >
-                                <Download className="h-3 w-3" /> PDF
-                              </a>
-                            )}
-                            <Link
-                              href={`/rides/${ride.id}`}
-                              className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                            <span className="max-w-[120px] truncate text-xs font-medium text-foreground">
+                              {ride.driver.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs italic text-muted-foreground">Unassigned</span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="hidden px-4 py-3.5 lg:table-cell">
+                        {ride.vehicle ? (
+                          <div className="text-xs">
+                            <p className="font-medium text-foreground">
+                              {ride.vehicle.make} {ride.vehicle.model}
+                            </p>
+                            <p className="font-mono text-[11px] text-muted-foreground">
+                              {ride.vehicle.plateNumber}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-xs italic text-muted-foreground">Unassigned</span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3.5">
+                        <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium", statusInfo.className)}>
+                          <StatusIcon className={cn("size-3.5", ride.status === "IN_PROGRESS" && "animate-spin")} />
+                          {statusInfo.label}
+                        </span>
+                      </TableCell>
+
+                      <TableCell
+                        className="px-4 py-3.5 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-end gap-1.5">
+                          {hasKashaf && kashafDocId && (
+                            <a
+                              href={`/api/documents/${kashafDocId}?download=true`}
+                              className={buttonVariants({
+                                variant: "outline",
+                                size: "xs",
+                                className: "h-7 gap-1 rounded-md px-2.5 text-xs",
+                              })}
                             >
-                              Open <ArrowRight className="h-3 w-3" />
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                              <Download className="size-3" /> PDF
+                            </a>
+                          )}
+                          <Link
+                            href={`/rides/${ride.id}`}
+                            className={buttonVariants({
+                              variant: "secondary",
+                              size: "xs",
+                              className: "h-7 gap-1 rounded-md px-2.5 text-xs",
+                            })}
+                          >
+                            Open <ArrowRight className="size-3" />
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
+
+      {/* Slide-over Ride Quick-View Sheet (Tallie style) */}
+      <Sheet open={Boolean(selectedRide)} onOpenChange={(open) => !open && setSelectedRide(null)}>
+        <SheetContent className="tallie-dashboard sm:max-w-md">
+          {selectedRide && (
+            <>
+              <SheetHeader className="border-b border-border pb-4">
+                <SheetTitle className="font-serif text-2xl font-normal">
+                  Ride {selectedRide.rideNumber}
+                </SheetTitle>
+                <SheetDescription>
+                  {selectedRide.pickup} → {selectedRide.destination}
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="flex flex-col gap-5 p-4 text-sm">
+                <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-zinc-50 p-3.5 dark:bg-card">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Time</p>
+                    <p className="mt-0.5 font-medium">{selectedRide.time || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Passengers</p>
+                    <p className="mt-0.5 font-medium">{selectedRide._count.passengers} pax</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Driver</p>
+                    <p className="mt-0.5 font-medium">
+                      {selectedRide.driver?.name || "Unassigned"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Vehicle</p>
+                    <p className="mt-0.5 font-medium">
+                      {selectedRide.vehicle
+                        ? `${selectedRide.vehicle.make} (${selectedRide.vehicle.plateNumber})`
+                        : "Unassigned"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Link href={`/rides/${selectedRide.id}`} className="w-full">
+                    <Button variant="default" className="w-full justify-between">
+                      Open Full Ride Details
+                      <ArrowRight className="size-4" />
+                    </Button>
+                  </Link>
+                  {selectedRide.kashafDocuments[0]?.id && (
+                    <a
+                      href={`/api/documents/${selectedRide.kashafDocuments[0].id}?download=true`}
+                      className="w-full"
+                    >
+                      <Button variant="outline" className="w-full justify-between">
+                        Download Kashaf PDF
+                        <Download className="size-4" />
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </>
           )}
-        </CardContent>
-      </Card>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

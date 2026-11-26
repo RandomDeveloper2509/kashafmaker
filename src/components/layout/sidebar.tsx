@@ -14,14 +14,35 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Menu,
-  X,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
+  User as UserIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-button";
+import {
+  Sidebar as ShadcnSidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navigation = [
   {
@@ -56,11 +77,25 @@ const navigation = [
   },
 ];
 
+const menuButtonClassName = cn(
+  "h-10 gap-2.5 rounded-lg px-3 text-sm text-sidebar-foreground/70 transition-colors",
+  "aria-[current=page]:bg-background aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground aria-[current=page]:shadow-xs",
+  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+  "[&_svg]:size-4!",
+  "group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:[&>span]:hidden"
+);
+
+const dropdownTriggerClassName =
+  "peer/menu-button flex w-full items-center gap-2.5 overflow-hidden rounded-lg p-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0";
+
 export function Sidebar({ userName }: { userName?: string }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const displayName = userName || session?.user?.name;
+  const { state, isMobile, setOpenMobile, toggleSidebar } = useSidebar();
+  const isCollapsed = state === "collapsed" && !isMobile;
+
+  const displayName = userName || session?.user?.name || "User";
+  const userEmail = session?.user?.email || "";
   const role = session?.user?.role || "OPERATOR";
 
   const groups = useMemo(
@@ -74,122 +109,141 @@ export function Sidebar({ userName }: { userName?: string }) {
     [role]
   );
 
-  const SidebarContent = () => (
-    <div className="flex h-full flex-col">
-      {/* Logo */}
-      <Link
-        href="/dashboard"
-        className="flex h-16 shrink-0 items-center gap-3 px-4 border-b border-slate-100"
-        onClick={() => setMobileOpen(false)}
-      >
-        <img
-          src="/logo.png"
-          alt="Rihal Next Logo"
-          className="h-10 w-10 object-contain rounded-full shadow-sm"
-        />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-slate-900 leading-tight truncate">Rihal Next</p>
-          <p className="text-[9px] text-slate-400 font-medium leading-tight truncate">Smarter Journeys. Seamless Operations.</p>
-        </div>
-      </Link>
-
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {groups.map((group) => (
-          <div key={group.group}>
-            <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-              {group.group}
-            </p>
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const isActive =
-                  pathname === item.href || pathname.startsWith(`${item.href}/`);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all",
-                      isActive
-                        ? "bg-indigo-600 text-white shadow-sm"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    )}
-                  >
-                    <item.icon
-                      className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-slate-400")}
-                    />
-                    <span className="flex-1 truncate">{item.name}</span>
-                    {isActive && <ChevronRight className="h-3 w-3 text-indigo-200 shrink-0" />}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      {/* PWA Install Button */}
-      <div className="shrink-0 px-3 pb-2">
-        <InstallAppButton variant="sidebar" />
-      </div>
-
-      {/* User footer */}
-      <div className="shrink-0 border-t border-slate-100 p-3">
-        {displayName && (
-          <div className="flex items-center gap-2.5 rounded-lg px-2 py-2 mb-1">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-800">{displayName}</p>
-              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">{role}</p>
-            </div>
-          </div>
-        )}
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          Sign out
-        </button>
-      </div>
-    </div>
-  );
-
   return (
-    <>
-      {/* Mobile hamburger */}
-      <button
-        className="fixed left-4 top-4 z-40 rounded-xl bg-white p-2 shadow-md border border-slate-200 lg:hidden"
-        onClick={() => setMobileOpen(!mobileOpen)}
-        aria-label="Toggle menu"
-      >
-        {mobileOpen ? (
-          <X className="h-5 w-5 text-slate-600" />
-        ) : (
-          <Menu className="h-5 w-5 text-slate-600" />
-        )}
-      </button>
+    <ShadcnSidebar
+      collapsible="icon"
+      className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+    >
+      <SidebarHeader className="h-16 justify-center border-b border-sidebar-border px-3 group-data-[collapsible=icon]:px-2">
+        <Link
+          href="/dashboard"
+          onClick={() => {
+            if (isMobile) setOpenMobile(false);
+          }}
+          className="flex items-center gap-2.5 overflow-hidden rounded-lg px-1 py-1"
+        >
+          <img
+            src="/logo.png"
+            alt="Rihal Next Logo"
+            className="h-9 w-9 shrink-0 rounded-full object-contain shadow-xs"
+          />
+          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+            <p className="truncate text-sm font-semibold text-sidebar-foreground leading-tight">
+              Rihal Next
+            </p>
+            <p className="truncate text-[10px] font-medium text-sidebar-muted-foreground leading-tight">
+              Smarter Journeys. Seamless Ops.
+            </p>
+          </div>
+        </Link>
+      </SidebarHeader>
 
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+      <SidebarContent className="no-scrollbar px-2 py-3">
+        {groups.map((group) => (
+          <SidebarGroup key={group.group} className="px-1 py-1.5">
+            <SidebarGroupLabel className="px-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted-foreground">
+              {group.group}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {group.items.map((item) => {
+                  const isActive =
+                    pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.name}
+                        className={menuButtonClassName}
+                      >
+                        <Link
+                          href={item.href}
+                          aria-current={isActive ? "page" : undefined}
+                          onClick={() => {
+                            if (isMobile) setOpenMobile(false);
+                          }}
+                        >
+                          <item.icon />
+                          <span>{item.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
 
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 w-56 border-r border-slate-200 bg-white transition-transform duration-200 lg:translate-x-0 shadow-lg lg:shadow-none",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <SidebarContent />
-      </aside>
-    </>
+      <SidebarFooter className="border-t border-sidebar-border p-2 gap-1">
+        <div className="group-data-[collapsible=icon]:hidden px-1 pb-1">
+          <InstallAppButton variant="sidebar" />
+        </div>
+
+        <SidebarMenu className="gap-1">
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                type="button"
+                className={cn(dropdownTriggerClassName, menuButtonClassName)}
+                aria-label="Account"
+              >
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-semibold text-background">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+                <span className="truncate font-medium text-sidebar-foreground">
+                  {displayName}
+                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                align="start"
+                className="tallie-dashboard w-56"
+              >
+                <DropdownMenuLabel className="font-normal">
+                  <div className="leading-tight">
+                    <p className="text-sm font-medium text-foreground">{displayName}</p>
+                    {userEmail ? (
+                      <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+                    ) : null}
+                    <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {role}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {role === "ADMIN" && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">
+                      <UserIcon />
+                      User Management
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                >
+                  <LogOut />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem className="hidden md:block">
+            <SidebarMenuButton
+              tooltip={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className={menuButtonClassName}
+              onClick={toggleSidebar}
+            >
+              {isCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+              <span>{isCollapsed ? "Expand" : "Collapse"}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </ShadcnSidebar>
   );
 }

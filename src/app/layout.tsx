@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "@/components/watermelon/tallie-dashboard/dashboard.css";
 import { AuthSessionProvider } from "@/components/layout/session-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -10,7 +12,7 @@ const inter = Inter({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#0f172a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -54,7 +56,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-full antialiased">
-        <AuthSessionProvider>{children}</AuthSessionProvider>
+        <TooltipProvider>
+          <AuthSessionProvider>{children}</AuthSessionProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

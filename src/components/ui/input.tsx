@@ -1,13 +1,32 @@
-import { cn } from "@/lib/utils";
-import { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef } from "react";
+import * as React from "react"
+import { cn } from "cn"
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
+interface InputProps extends React.ComponentProps<"input"> {
+  label?: string
+  error?: string
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, id, ...props }, ref) => {
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, label, error, id, ...props }, ref) => {
+    const inputEl = (
+      <input
+        ref={ref}
+        id={id}
+        type={type}
+        data-slot="input"
+        className={cn(
+          "h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30",
+          "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+          "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+          error && "border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20",
+          className
+        )}
+        {...props}
+      />
+    )
+
+    if (!label && !error) return inputEl
+
     return (
       <div className="space-y-1.5">
         {label && (
@@ -15,30 +34,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          id={id}
-          className={cn(
-            "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20",
-            error && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
-            className
-          )}
-          {...props}
-        />
+        {inputEl}
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
-    );
+    )
   }
-);
-Input.displayName = "Input";
+)
+Input.displayName = "Input"
 
-interface SelectProps extends InputHTMLAttributes<HTMLSelectElement> {
-  label?: string;
-  error?: string;
-  options: Array<{ value: string; label: string }>;
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string
+  error?: string
+  options: Array<{ value: string; label: string }>
 }
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, error, id, options, ...props }, ref) => {
     return (
       <div className="space-y-1.5">
@@ -51,7 +61,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={cn(
-            "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20",
+            "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20",
             error && "border-red-500",
             className
           )}
@@ -65,17 +75,17 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         </select>
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
-    );
+    )
   }
-);
-Select.displayName = "Select";
+)
+Select.displayName = "Select"
 
-interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label?: string;
-  error?: string;
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string
+  error?: string
 }
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, label, error, id, ...props }, ref) => {
     return (
       <div className="space-y-1.5">
@@ -96,7 +106,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         />
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
-    );
+    )
   }
-);
-Textarea.displayName = "Textarea";
+)
+Textarea.displayName = "Textarea"
+
+export { Input, Select, Textarea }
