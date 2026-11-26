@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import {
   Plus, Search, MapPin, Users, Car, ArrowRight, FileText, Trash2, Edit, Download, FileSpreadsheet,
+  ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -49,6 +50,15 @@ const statusDot = (status: string): "success" | "info" | "danger" | "warning" =>
 
 const PAGE_SIZE = 8;
 
+type SortKey = "rideNumber" | "date" | "route" | "driver" | "status" | "vehicle" | "pax" | "kashaf";
+type SortDir = "asc" | "desc";
+
+/** Extracts the short 4-digit Kashaf number from R-YYYYMMDD-XXXX */
+function shortRideNumber(rideNumber: string): string {
+  const parts = rideNumber.split("-");
+  return parts.length > 1 ? parts[parts.length - 1] : rideNumber;
+}
+
 /** Returns local YYYY-MM-DD (no UTC shift) */
 function localDateStr(d: Date): string {
   const y = d.getFullYear();
@@ -64,7 +74,62 @@ export default function RidesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const debouncedSearch = useDebouncedValue(search, 300);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+    setPage(1);
+  };
+
+  const sortedRides = useMemo(() => {
+    if (!sortKey) return rides;
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...rides].sort((a, b) => {
+      switch (sortKey) {
+        case "rideNumber": {
+          const sa = shortRideNumber(a.rideNumber);
+          const sb = shortRideNumber(b.rideNumber);
+          const na = Number(sa);
+          const nb = Number(sb);
+          if (!Number.isNaN(na) && !Number.isNaN(nb)) return (na - nb) * dir;
+          return sa.localeCompare(sb) * dir;
+        }
+        case "date": {
+          const da = new Date(a.date).getTime();
+          const db = new Date(b.date).getTime();
+          if (da !== db) return (da - db) * dir;
+          return (a.time || "").localeCompare(b.time || "") * dir;
+        }
+        case "route": {
+          const ra = `${a.pickup} ${a.destination}`.toLowerCase();
+          const rb = `${b.pickup} ${b.destination}`.toLowerCase();
+          return ra.localeCompare(rb) * dir;
+        }
+        case "driver":
+          return (a.driver?.name || "").localeCompare(b.driver?.name || "") * dir;
+        case "status":
+          return a.status.localeCompare(b.status) * dir;
+        case "vehicle": {
+          const va = a.vehicle ? `${a.vehicle.make} ${a.vehicle.model} ${a.vehicle.plateNumber}` : "";
+          const vb = b.vehicle ? `${b.vehicle.make} ${b.vehicle.model} ${b.vehicle.plateNumber}` : "";
+          return va.localeCompare(vb) * dir;
+        }
+        case "pax":
+          return ((a._count?.passengers ?? 0) - (b._count?.passengers ?? 0)) * dir;
+        case "kashaf":
+          return ((a.kashafDocuments.length > 0 ? 1 : 0) - (b.kashafDocuments.length > 0 ? 1 : 0)) * dir;
+        default:
+          return 0;
+      }
+    });
+  }, [rides, sortKey, sortDir]);
 
   // Confirm dialog state
   const [confirmDelete, setConfirmDelete] = useState<{ type: "ride" | "kashaf"; id: string } | null>(null);
@@ -227,50 +292,83 @@ export default function RidesPage() {
           ) : (
             <div className="overflow-x-auto">
               {(() => {
-                const totalPages = Math.ceil(rides.length / PAGE_SIZE);
-                const pageRides = rides.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+                const totalPages = Math.ceil(sortedRides.length / PAGE_SIZE);
+                const pageRides = sortedRides.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+                const SortIcon = ({ col }: { col: SortKey }) =>
+                  sortKey === col ? (
+                    sortDir === "asc" ? (
+                      <ArrowUp className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                    ) : (
+                      <ArrowDown className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="h-3 w-3 opacity-40 group-hover/th:opacity-80" />
+                  );
+
+                const thBtnClass =
+                  "group/th inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors cursor-pointer select-none";
+
                 return (
                   <>
                     <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-muted/50/70">
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap w-32">
-                      Ride #
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="px-4 py-4 text-left whitespace-nowrap w-24">
+                      <button type="button" onClick={() => handleSort("rideNumber")} className={thBtnClass}>
+                        Ride # <SortIcon col="rideNumber" />
+                      </button>
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap w-28">
-                      Date
+                    <th className="px-4 py-4 text-left whitespace-nowrap w-28">
+                      <button type="button" onClick={() => handleSort("date")} className={thBtnClass}>
+                        Date <SortIcon col="date" />
+                      </button>
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide w-64">
-                      Route
+                    <th className="px-4 py-4 text-left w-64">
+                      <button type="button" onClick={() => handleSort("route")} className={thBtnClass}>
+                        Route <SortIcon col="route" />
+                      </button>
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell w-48">
-                      Driver
+                    <th className="px-4 py-4 text-left hidden md:table-cell w-44">
+                      <button type="button" onClick={() => handleSort("driver")} className={thBtnClass}>
+                        Driver <SortIcon col="driver" />
+                      </button>
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell w-40">
-                      Vehicle
+                    <th className="px-4 py-4 text-left whitespace-nowrap w-36">
+                      <button type="button" onClick={() => handleSort("status")} className={thBtnClass}>
+                        Status <SortIcon col="status" />
+                      </button>
                     </th>
-                    <th className="px-4 py-4 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide w-16">
-                      Pax
+                    <th className="px-4 py-4 text-left hidden lg:table-cell w-40">
+                      <button type="button" onClick={() => handleSort("vehicle")} className={thBtnClass}>
+                        Vehicle <SortIcon col="vehicle" />
+                      </button>
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap w-36">
-                      Status
+                    <th className="px-4 py-4 text-center w-20">
+                      <button type="button" onClick={() => handleSort("pax")} className={thBtnClass}>
+                        Pax <SortIcon col="pax" />
+                      </button>
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden sm:table-cell whitespace-nowrap w-40">
-                      Kashaf Document
+                    <th className="px-4 py-4 text-left hidden sm:table-cell whitespace-nowrap w-40">
+                      <button type="button" onClick={() => handleSort("kashaf")} className={thBtnClass}>
+                        Kashaf Document <SortIcon col="kashaf" />
+                      </button>
                     </th>
-                    <th className="px-4 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide sticky right-0 bg-muted/50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10 w-44">
+                    <th className="px-4 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide sticky right-0 bg-muted/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10 w-44">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-border">
                   {pageRides.map((ride) => {
                     const kashafDoc = ride.kashafDocuments[0];
                     return (
-                      <tr key={ride.id} className="group hover:bg-muted/50/80 transition-colors">
+                      <tr key={ride.id} className="group hover:bg-muted/50 transition-colors">
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="font-mono text-xs whitespace-nowrap bg-muted text-foreground px-2.5 py-1 rounded-md font-semibold border border-border/60 inline-block">
-                            {ride.rideNumber}
+                          <span
+                            title={ride.rideNumber}
+                            className="font-mono text-xs whitespace-nowrap bg-muted text-foreground px-2.5 py-1 rounded-md font-semibold border border-border inline-block"
+                          >
+                            {shortRideNumber(ride.rideNumber)}
                           </span>
                         </td>
                         <td className="px-4 py-3.5 text-xs text-muted-foreground whitespace-nowrap font-medium">
@@ -287,7 +385,7 @@ export default function RidesPage() {
                         <td className="px-4 py-3.5 hidden md:table-cell">
                           {ride.driver?.name ? (
                             <div className="flex items-center gap-1.5 text-xs">
-                              <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 shrink-0">
+                              <div className="h-5 w-5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center text-[10px] font-bold text-indigo-700 dark:text-indigo-300 shrink-0">
                                 {ride.driver.name.charAt(0)}
                               </div>
                               <span className="text-muted-foreground truncate" title={ride.driver.name}>
@@ -297,6 +395,16 @@ export default function RidesPage() {
                           ) : (
                             <span className="text-xs text-muted-foreground italic">Unassigned</span>
                           )}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <Badge variant={statusVariant(ride.status)}>
+                            <StatusDot status={statusDot(ride.status)} />
+                            {ride.status === "SCHEDULED"
+                              ? "Pending Approval"
+                              : ride.status === "IN_PROGRESS"
+                              ? "Approved"
+                              : ride.status.replace("_", " ")}
+                          </Badge>
                         </td>
                         <td className="px-4 py-3.5 hidden lg:table-cell">
                           {ride.vehicle ? (
@@ -316,16 +424,6 @@ export default function RidesPage() {
                             {ride._count?.passengers ?? 0}
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 whitespace-nowrap">
-                          <Badge variant={statusVariant(ride.status)}>
-                            <StatusDot status={statusDot(ride.status)} />
-                            {ride.status === "SCHEDULED"
-                              ? "Pending Approval"
-                              : ride.status === "IN_PROGRESS"
-                              ? "Approved"
-                              : ride.status.replace("_", " ")}
-                          </Badge>
-                        </td>
                         <td className="px-4 py-3.5 hidden sm:table-cell whitespace-nowrap">
                           {kashafDoc ? (
                             <div className="flex items-center gap-1.5">
@@ -333,15 +431,15 @@ export default function RidesPage() {
                                 <FileText className="h-3 w-3 mr-1" /> Generated
                               </Badge>
                               <a
-                                href={`/api/documents/${kashafDoc.id}?download=true`}
-                                className="p-1 rounded text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                href={`/api/documents/${kashafDoc.id}?download=1`}
+                                className="p-1 rounded text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
                                 title="Download PDF"
                               >
                                 <Download className="h-3.5 w-3.5" />
                               </a>
                               <button
                                 type="button"
-                                className="p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                                 title="Delete Kashaf PDF"
                                 onClick={() => setConfirmDelete({ type: "kashaf", id: kashafDoc.id })}
                               >
@@ -352,23 +450,23 @@ export default function RidesPage() {
                             <Badge variant="default" className="text-[11px] py-0.5 px-2">Pending</Badge>
                           )}
                         </td>
-                        <td className="px-4 py-3.5 text-right sticky right-0 bg-card group-hover:bg-muted/50/90 transition-colors shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
+                        <td className="px-4 py-3.5 text-right sticky right-0 bg-card group-hover:bg-muted/90 transition-colors shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
                           <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                             <Link
                               href={`/rides/${ride.id}/edit`}
-                              className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 shadow-sm transition-all"
+                              className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent hover:text-accent-foreground shadow-sm transition-all"
                             >
-                              <Edit className="h-3.5 w-3.5 text-muted-foreground group-hover:text-indigo-600" /> Edit
+                              <Edit className="h-3.5 w-3.5 text-muted-foreground" /> Edit
                             </Link>
                             <Link
                               href={`/rides/${ride.id}`}
-                              className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                              className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
                             >
                               Open <ArrowRight className="h-3 w-3" />
                             </Link>
                             <button
                               type="button"
-                              className="inline-flex items-center justify-center rounded-lg border border-red-100 bg-red-50 p-1.5 text-red-500 hover:bg-red-100 transition-colors"
+                              className="inline-flex items-center justify-center rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 p-1.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                               onClick={() => setConfirmDelete({ type: "ride", id: ride.id })}
                               title="Delete ride"
                             >
@@ -384,7 +482,7 @@ export default function RidesPage() {
                   {totalPages > 1 && (
                     <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-card">
                       <p className="text-xs text-muted-foreground">
-                        Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, rides.length)} of {rides.length} rides
+                        Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sortedRides.length)} of {sortedRides.length} rides
                       </p>
                       <div className="flex items-center gap-1">
                         <button
