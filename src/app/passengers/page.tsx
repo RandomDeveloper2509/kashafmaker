@@ -241,16 +241,16 @@ export default function PassengersPage() {
 
       {/* Search Filter Bar */}
       <div className="mb-6 relative">
-        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
-          className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
+          className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
           placeholder="Search by name, passport number, or nationality…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      <Card className="border border-slate-200 shadow-sm overflow-hidden rounded-xl">
+      <Card className="border border-border shadow-sm overflow-hidden rounded-xl">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-16">
@@ -285,60 +285,60 @@ export default function PassengersPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/80">
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-border bg-muted/50/80">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Passenger Name
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Passport No
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">
                       Nationality
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">
                       Visa Type
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
                       Phone / Iqama
                     </th>
-                    <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-border bg-card">
                   {passengers.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={p.id} className="hover:bg-muted/50/80 transition-colors">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 shrink-0 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs">
                             {p.fullName ? p.fullName.charAt(0).toUpperCase() : "P"}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900 text-sm">{p.fullName}</p>
+                            <p className="font-semibold text-foreground text-sm">{p.fullName}</p>
                             {p.gender && (
-                              <p className="text-[11px] text-slate-400 capitalize">{p.gender.toLowerCase()}</p>
+                              <p className="text-[11px] text-muted-foreground capitalize">{p.gender.toLowerCase()}</p>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="px-5 py-4">
                         {p.passportNumber ? (
-                          <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-medium border border-slate-200">
+                          <span className="font-mono text-xs bg-muted text-foreground px-2.5 py-1 rounded-md font-medium border border-border">
                             {p.passportNumber}
                           </span>
                         ) : (
-                          <span className="text-slate-400 italic text-xs">Not provided</span>
+                          <span className="text-muted-foreground italic text-xs">Not provided</span>
                         )}
                       </td>
                       <td className="px-5 py-4 hidden sm:table-cell">
                         {p.nationality ? (
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700">
-                            <Globe className="h-3.5 w-3.5 text-slate-400" />
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
                             {p.nationality}
                           </div>
                         ) : (
-                          <span className="text-slate-400 text-xs">—</span>
+                          <span className="text-muted-foreground text-xs">—</span>
                         )}
                       </td>
                       <td className="px-5 py-4 hidden md:table-cell">
@@ -347,13 +347,13 @@ export default function PassengersPage() {
                             {p.visaType}
                           </span>
                         ) : (
-                          <span className="text-slate-400 text-xs">—</span>
+                          <span className="text-muted-foreground text-xs">—</span>
                         )}
                       </td>
                       <td className="px-5 py-4 hidden lg:table-cell">
-                        <p className="text-xs text-slate-700 font-medium">{p.phone || "—"}</p>
+                        <p className="text-xs text-foreground font-medium">{p.phone || "—"}</p>
                         {p.iqamaNumber && (
-                          <p className="text-[11px] font-mono text-slate-400">IQ: {p.iqamaNumber}</p>
+                          <p className="text-[11px] font-mono text-muted-foreground">IQ: {p.iqamaNumber}</p>
                         )}
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -361,7 +361,7 @@ export default function PassengersPage() {
                           <button
                             type="button"
                             onClick={() => openEdit(p)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors shadow-sm"
+                            className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50 hover:text-indigo-600 transition-colors shadow-sm"
                             title="Edit passenger"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -395,7 +395,7 @@ export default function PassengersPage() {
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
           <span>
             Showing {((page - 1) * 10) + 1}–{Math.min(page * 10, total)} of {total} passengers
           </span>
@@ -404,7 +404,7 @@ export default function PassengersPage() {
               type="button"
               disabled={page === 1}
               onClick={() => setPage((p) => p - 1)}
-              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               ← Prev
             </button>
@@ -427,7 +427,7 @@ export default function PassengersPage() {
                   className={`inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                     p === page
                       ? "border-indigo-500 bg-indigo-600 text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      : "border-border bg-card text-muted-foreground hover:bg-muted/50"
                   }`}
                 >
                   {p}
@@ -438,7 +438,7 @@ export default function PassengersPage() {
               type="button"
               disabled={page === totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Next →
             </button>
@@ -533,13 +533,13 @@ export default function PassengersPage() {
             />
           </div>
 
-          <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+          <div className="flex gap-3 justify-end pt-4 border-t border-border">
             <Button
               type="button"
               variant="outline"
               onClick={() => setModalOpen(false)}
               disabled={saving}
-              className="border-slate-300"
+              className="border-border"
             >
               Cancel
             </Button>

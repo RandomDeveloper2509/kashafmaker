@@ -165,7 +165,7 @@ export default function CompaniesPage() {
               onChange={(e) => setForm({ ...form, additionalInfo: e.target.value })}
             />
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Logo</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Logo</label>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"

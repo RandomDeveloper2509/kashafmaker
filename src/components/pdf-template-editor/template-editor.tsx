@@ -182,9 +182,9 @@ export function TemplateEditor({
 
         <Card>
           <CardContent className="p-4 overflow-auto">
-            <div ref={containerRef} className="relative inline-block border border-slate-200 bg-white">
+            <div ref={containerRef} className="relative inline-block border border-border bg-card">
               {pdfError ? (
-                <div className="max-w-md p-8 text-sm text-slate-600">
+                <div className="max-w-md p-8 text-sm text-muted-foreground">
                   Preview could not render this PDF in the browser. The file is still saved. Generate Kashaf from a ride and the data will be written onto the uploaded form.
                   <p className="mt-2 text-xs text-red-600">{pdfError}</p>
                 </div>
@@ -228,13 +228,13 @@ export function TemplateEditor({
           <CardContent className="space-y-3 max-h-60 overflow-y-auto">
             {Object.entries(DYNAMIC_FIELDS).map(([category, fields]) => (
               <div key={category}>
-                <p className="text-xs font-semibold uppercase text-slate-500 mb-1">{category}</p>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">{category}</p>
                 <div className="flex flex-wrap gap-1">
                   {fields.map((f) => (
                     <button
                       key={f.key}
                       onClick={() => addField(f.key)}
-                      className="rounded px-2 py-1 text-xs bg-slate-100 hover:bg-indigo-100 text-slate-700"
+                      className="rounded px-2 py-1 text-xs bg-muted hover:bg-indigo-100 text-foreground"
                     >
                       <Plus className="inline h-3 w-3" /> {f.label}
                     </button>

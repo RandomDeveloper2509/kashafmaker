@@ -41,7 +41,7 @@ function LocationInput({
 
   return (
     <div className="relative">
-      <label className="block text-xs font-semibold text-slate-700 mb-1">
+      <label className="block text-xs font-semibold text-foreground mb-1">
         {label}
       </label>
       <input
@@ -52,16 +52,16 @@ function LocationInput({
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 bg-white py-2.5 px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+        className="w-full rounded-lg border border-border bg-card py-2.5 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
       />
       {showDropdown && (
-        <ul className="absolute z-30 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+        <ul className="absolute z-30 mt-1 w-full rounded-xl border border-border bg-card shadow-lg overflow-hidden">
           {(value.length === 0 ? LOCATION_SUGGESTIONS : filtered).map((s) => (
             <li key={s}>
               <button
                 type="button"
                 onMouseDown={() => { onChange(s); setOpen(false); }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
               >
                 <MapPin className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
                 {s}
@@ -412,13 +412,13 @@ export function RideForm({ rideId, initial }: RideFormProps) {
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
       {/* 1. RIDE DETAILS CARD */}
-      <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
-        <CardHeader className="bg-slate-50/70 border-b border-slate-100 py-4 px-6">
-          <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+      <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="bg-muted/50/70 border-b border-border py-4 px-6">
+          <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
             <MapPin className="h-5 w-5 text-indigo-600" />
             Ride Details
           </CardTitle>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Set pickup and destination locations, schedule date, and assign driver and vehicle
           </p>
         </CardHeader>
@@ -471,7 +471,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
           </div>
 
           {/* Driver & Vehicle */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border">
             <div>
               <Select
                 label="Assign Driver"
@@ -511,7 +511,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
           </div>
 
           {/* Fare & Referral (Private / Saved on Ride, not on Kashaf) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border">
             <div>
               <Input
                 label="Fare / Price (SAR)"
@@ -521,19 +521,19 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                 value={form.fare}
                 onChange={(e) => setForm({ ...form, fare: e.target.value })}
               />
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-muted-foreground">
                 Ride price in SAR (saved with ride and used in Excel export; not shown on Kashaf PDF)
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-foreground mb-1">
                 Referral
               </label>
               <select
                 value={form.referral}
                 onChange={(e) => setForm({ ...form, referral: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full rounded-lg border border-border bg-card py-2 px-3 text-sm text-foreground focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
               >
                 <option value="Self">Self (Default)</option>
                 <optgroup label="System Referral Channels">
@@ -560,7 +560,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                     </optgroup>
                   )}
               </select>
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[11px] text-muted-foreground">
                 Default is &quot;Self&quot;. Select channel or driver if referred.
               </p>
             </div>
@@ -580,17 +580,17 @@ export function RideForm({ rideId, initial }: RideFormProps) {
       </Card>
 
       {/* 2. PASSENGERS CARD (Full Width, Matches User Mockup) */}
-      <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
-        <CardHeader className="bg-slate-50/70 border-b border-slate-100 py-4 px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="bg-muted/50/70 border-b border-border py-4 px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+            <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <Users className="h-5 w-5 text-indigo-600" />
               Passengers
               <span className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
                 {selectedPassengers.length}
               </span>
             </CardTitle>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Add and review passengers included in this ride and its Kashaf document
             </p>
           </div>
@@ -618,16 +618,16 @@ export function RideForm({ rideId, initial }: RideFormProps) {
         <CardContent className="p-6 space-y-4">
           {/* Quick Search & Attach from Existing Database */}
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search existing passengers by name or passport to attach to ride..."
               value={passengerSearch}
               onChange={(e) => setPassengerSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
+              className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
             />
             {searchResults.length > 0 && (
-              <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg max-h-56 overflow-y-auto divide-y divide-slate-100">
+              <div className="absolute z-20 mt-1 w-full rounded-xl border border-border bg-card shadow-lg max-h-56 overflow-y-auto divide-y divide-border">
                 {searchResults.map((p) => (
                   <button
                     key={p.id}
@@ -640,8 +640,8 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                         {p.fullName ? p.fullName.charAt(0).toUpperCase() : "P"}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-800 text-sm">{p.fullName}</p>
-                        <p className="text-xs text-slate-400">
+                        <p className="font-semibold text-foreground text-sm">{p.fullName}</p>
+                        <p className="text-xs text-muted-foreground">
                           {p.passportNumber ? `Passport: ${p.passportNumber}` : "No passport"} • {p.nationality || "No nationality"}
                         </p>
                       </div>
@@ -657,42 +657,42 @@ export function RideForm({ rideId, initial }: RideFormProps) {
 
           {/* Passenger Table (Clean Mockup Layout) */}
           {selectedPassengers.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 py-10 text-center bg-slate-50/50">
+            <div className="rounded-xl border border-dashed border-border py-10 text-center bg-muted/30">
               <Users className="mx-auto h-10 w-10 text-slate-300 mb-2" />
-              <p className="text-sm font-semibold text-slate-700">No passengers assigned to this ride yet</p>
-              <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              <p className="text-sm font-semibold text-foreground">No passengers assigned to this ride yet</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
                 Click &quot;+ Add Passenger&quot; to enter details manually, search existing profiles above, or &quot;Scan Visas&quot; to extract passport info automatically.
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+            <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/80">
-                    <th className="w-16 px-3 py-3.5 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-border bg-muted/50/80">
+                    <th className="w-16 px-3 py-3.5 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       #
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Name
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Passport No
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Nationality
                     </th>
-                    <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-border bg-card">
                   {selectedPassengers.map((p, idx) => (
-                    <tr key={p.id || idx} className="hover:bg-slate-50/70 transition-colors">
+                    <tr key={p.id || idx} className="hover:bg-muted/50/70 transition-colors">
                       {/* Order / Reorder Column */}
                       <td className="px-3 py-3.5 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
-                          <span className="font-mono text-xs font-bold text-slate-500 w-4 text-center">
+                          <span className="font-mono text-xs font-bold text-muted-foreground w-4 text-center">
                             {idx + 1}
                           </span>
                           <div className="inline-flex flex-col gap-0.5">
@@ -700,7 +700,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                               type="button"
                               disabled={idx === 0}
                               onClick={() => movePassenger(idx, idx - 1)}
-                              className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-slate-100 disabled:opacity-20 disabled:hover:text-slate-400 disabled:hover:bg-transparent transition-colors"
+                              className="p-1 rounded text-muted-foreground hover:text-indigo-600 hover:bg-accent disabled:opacity-20 disabled:hover:text-muted-foreground disabled:hover:bg-transparent transition-colors"
                               title="Move passenger up"
                             >
                               <ArrowUp className="h-3 w-3" />
@@ -709,7 +709,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                               type="button"
                               disabled={idx === selectedPassengers.length - 1}
                               onClick={() => movePassenger(idx, idx + 1)}
-                              className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-slate-100 disabled:opacity-20 disabled:hover:text-slate-400 disabled:hover:bg-transparent transition-colors"
+                              className="p-1 rounded text-muted-foreground hover:text-indigo-600 hover:bg-accent disabled:opacity-20 disabled:hover:text-muted-foreground disabled:hover:bg-transparent transition-colors"
                               title="Move passenger down"
                             >
                               <ArrowDown className="h-3 w-3" />
@@ -725,7 +725,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                             {p.fullName ? p.fullName.charAt(0).toUpperCase() : idx + 1}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900 text-sm">{p.fullName}</p>
+                            <p className="font-semibold text-foreground text-sm">{p.fullName}</p>
                           </div>
                         </div>
                       </td>
@@ -733,23 +733,23 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                       {/* Passport No Column */}
                       <td className="px-5 py-3.5">
                         {p.passportNumber ? (
-                          <span className="font-mono text-xs bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md font-semibold border border-slate-200">
+                          <span className="font-mono text-xs bg-muted text-foreground px-2.5 py-1 rounded-md font-semibold border border-border">
                             {p.passportNumber}
                           </span>
                         ) : (
-                          <span className="text-slate-400 italic text-xs">Not provided</span>
+                          <span className="text-muted-foreground italic text-xs">Not provided</span>
                         )}
                       </td>
 
                       {/* Nationality Column */}
                       <td className="px-5 py-3.5">
                         {p.nationality ? (
-                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700">
-                            <Globe className="h-3.5 w-3.5 text-slate-400" />
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
                             {p.nationality}
                           </div>
                         ) : (
-                          <span className="text-slate-400 text-xs">—</span>
+                          <span className="text-muted-foreground text-xs">—</span>
                         )}
                       </td>
 
@@ -759,7 +759,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
                           <button
                             type="button"
                             onClick={() => handleOpenEditPassenger(p)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 shadow-sm transition-colors"
+                            className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50 hover:text-indigo-600 shadow-sm transition-colors"
                             title="Edit passenger details"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -786,7 +786,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
 
       {/* 3. BOTTOM FORM ACTIONS */}
       <div className="flex items-center justify-between pt-2">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           💡 Ride will be saved in <strong>Pending Approval</strong> state. Once approved, the Kashaf document can be generated.
         </p>
         <div className="flex items-center gap-3">
@@ -795,7 +795,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
             variant="outline"
             onClick={() => router.back()}
             disabled={loading}
-            className="border-slate-300"
+            className="border-border"
           >
             Cancel
           </Button>
@@ -848,7 +848,7 @@ export function RideForm({ rideId, initial }: RideFormProps) {
           />
         </div>
 
-        <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+        <div className="flex gap-3 justify-end pt-4 border-t border-border">
           <Button
             type="button"
             variant="outline"

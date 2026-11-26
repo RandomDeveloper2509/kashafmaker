@@ -36,19 +36,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const config = {
     success: {
       icon: CheckCircle2,
-      classes: "bg-white border-emerald-200 text-slate-800",
+      classes: "bg-popover border-emerald-200 dark:border-emerald-800/60 text-popover-foreground",
       iconClass: "text-emerald-500",
       bar: "bg-emerald-500",
     },
     error: {
       icon: AlertCircle,
-      classes: "bg-white border-red-200 text-slate-800",
+      classes: "bg-popover border-red-200 dark:border-red-800/60 text-popover-foreground",
       iconClass: "text-red-500",
       bar: "bg-red-500",
     },
     info: {
       icon: Info,
-      classes: "bg-white border-blue-200 text-slate-800",
+      classes: "bg-popover border-blue-200 dark:border-blue-800/60 text-popover-foreground",
       iconClass: "text-blue-500",
       bar: "bg-blue-500",
     },

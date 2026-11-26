@@ -180,7 +180,7 @@ export default function RideDetailPage() {
     return (
       <AppLayout>
         <div className="py-12 text-center">
-          <p className="text-slate-500 mb-4">Ride not found</p>
+          <p className="text-muted-foreground mb-4">Ride not found</p>
           <Button href="/rides" variant="outline">Back to Rides</Button>
         </div>
       </AppLayout>
@@ -199,7 +199,7 @@ export default function RideDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={`/rides/${ride.id}/edit`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50 shadow-sm"
             >
               <Edit className="h-4 w-4" /> Edit Ride
             </Link>
@@ -244,7 +244,7 @@ export default function RideDetailPage() {
             <Button
               variant="outline"
               onClick={duplicateRide}
-              className="border-slate-200 text-slate-700 hover:bg-slate-50 text-sm"
+              className="border-border text-foreground hover:bg-muted/50 text-sm"
             >
               <Copy className="h-4 w-4 mr-1.5" /> Duplicate
             </Button>
@@ -334,7 +334,7 @@ export default function RideDetailPage() {
             Kashaf Generated: {latestDoc.documentNumber}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
             Kashaf Pending
           </span>
         )}
@@ -344,51 +344,51 @@ export default function RideDetailPage() {
         {/* LEFT COLUMN: Route Details & Passengers Table */}
         <div className="lg:col-span-2 space-y-6">
           {/* Trip Details Card */}
-          <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+          <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 py-5 px-6">
-              <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-indigo-600" /> Trip Details
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100/80 shadow-sm">
                 <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Pickup Location</p>
-                  <p className="font-bold text-slate-900 text-base">{ride.pickup}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Pickup Location</p>
+                  <p className="font-bold text-foreground text-base">{ride.pickup}</p>
                 </div>
-                <div className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full bg-white shadow-md border border-slate-200 text-indigo-500">
+                <div className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full bg-card shadow-md border border-border text-indigo-500">
                   <ArrowRight className="h-5 w-5" />
                 </div>
                 <div className="flex-1 sm:text-right">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Destination</p>
-                  <p className="font-bold text-slate-900 text-base">{ride.destination}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Destination</p>
+                  <p className="font-bold text-foreground text-base">{ride.destination}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Trip Type</p>
-                  <p className="font-semibold text-slate-800 text-base">{ride.tripType || "Standard Transfer"}</p>
+                <div className="p-4 bg-muted/50 rounded-xl border border-border">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Trip Type</p>
+                  <p className="font-semibold text-foreground text-base">{ride.tripType || "Standard Transfer"}</p>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Intermediate Stops</p>
-                  <p className="font-semibold text-slate-800 text-base">{ride.intermediateStops || "None (Direct Route)"}</p>
+                <div className="p-4 bg-muted/50 rounded-xl border border-border">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Intermediate Stops</p>
+                  <p className="font-semibold text-foreground text-base">{ride.intermediateStops || "None (Direct Route)"}</p>
                 </div>
               </div>
 
               {ride.notes && (
                 <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
                   <p className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-1">Notes / Instructions</p>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{ride.notes}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{ride.notes}</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Passengers Table Card */}
-          <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+          <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 py-5 px-6 flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
                 <Users className="h-5 w-5 text-indigo-600" /> Passengers ({ride.passengers.length})
               </CardTitle>
               <Link
@@ -400,7 +400,7 @@ export default function RideDetailPage() {
             </CardHeader>
             <CardContent className="p-0">
               {ride.passengers.length === 0 ? (
-                <div className="p-12 text-center text-slate-400 text-sm">
+                <div className="p-12 text-center text-muted-foreground text-sm">
                   <Users className="h-12 w-12 mx-auto mb-3 text-slate-300" />
                   <p>No passengers assigned to this ride.</p>
                 </div>
@@ -408,14 +408,14 @@ export default function RideDetailPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/60">
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Passport No</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nationality</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Visa Type</th>
+                      <tr className="border-b border-border bg-muted/50/60">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Passport No</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nationality</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Visa Type</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
+                    <tbody className="divide-y divide-border bg-card">
                       {ride.passengers.map((rp, idx) => {
                         const snap = rp.passengerSnapshot;
                         const fullName = snap?.fullName || rp.passenger.fullName;
@@ -424,28 +424,28 @@ export default function RideDetailPage() {
                         const visaType = snap?.visaType || rp.passenger.visaType;
 
                         return (
-                          <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                          <tr key={idx} className="hover:bg-muted/50/80 transition-colors">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm">
                                   {fullName.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="font-semibold text-slate-900 text-base">{fullName}</span>
+                                <span className="font-semibold text-foreground text-base">{fullName}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4">
                               {passport ? (
-                                <span className="font-mono text-sm bg-slate-100 text-slate-800 px-3 py-1.5 rounded-md font-semibold border border-slate-200">
+                                <span className="font-mono text-sm bg-muted text-foreground px-3 py-1.5 rounded-md font-semibold border border-border">
                                   {passport}
                                 </span>
                               ) : (
-                                <span className="text-slate-400 text-sm italic">Not provided</span>
+                                <span className="text-muted-foreground text-sm italic">Not provided</span>
                               )}
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-700">
+                            <td className="px-6 py-4 text-sm text-foreground">
                               {nationality || "—"}
                             </td>
-                            <td className="px-6 py-4 text-sm text-slate-700 hidden sm:table-cell">
+                            <td className="px-6 py-4 text-sm text-foreground hidden sm:table-cell">
                               {visaType ? (
                                 <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700 border border-indigo-100">
                                   {visaType}
@@ -466,9 +466,9 @@ export default function RideDetailPage() {
 
           {/* KASHAF DOCUMENTS SECTION */}
           {ride.kashafDocuments.length > 0 && (
-            <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+            <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 py-5 px-6">
-                <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
                   <FileText className="h-5 w-5 text-indigo-600" /> Generated Kashaf Documents ({ride.kashafDocuments.length})
                 </CardTitle>
               </CardHeader>
@@ -476,16 +476,16 @@ export default function RideDetailPage() {
                 {ride.kashafDocuments.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-card rounded-xl border border-border shadow-sm hover:border-indigo-200 hover:shadow-md transition-all"
                   >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="font-bold font-mono text-slate-900 text-base">{doc.documentNumber}</p>
+                        <p className="font-bold font-mono text-foreground text-base">{doc.documentNumber}</p>
                         <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
                           Ready
                         </span>
                       </div>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-muted-foreground">
                         Generated on {new Date(doc.createdAt).toLocaleString()}
                       </p>
                     </div>
@@ -504,7 +504,7 @@ export default function RideDetailPage() {
                         size="sm"
                         variant="outline"
                         href={`/api/documents/${doc.id}?download=1`}
-                        className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs px-3 py-1.5"
+                        className="border-border text-foreground hover:bg-muted/50 text-xs px-3 py-1.5"
                       >
                         <Download className="h-3.5 w-3.5 mr-1" /> Download
                       </Button>
@@ -527,9 +527,9 @@ export default function RideDetailPage() {
         {/* RIGHT COLUMN: Driver, Vehicle, & Quick Actions */}
         <div className="space-y-6">
           {/* Driver Card */}
-          <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+          <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 py-4 px-5">
-              <CardTitle className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+              <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                 <User className="h-4 w-4 text-indigo-600" /> Assigned Driver
               </CardTitle>
             </CardHeader>
@@ -540,54 +540,54 @@ export default function RideDetailPage() {
                     {(ride.driverSnapshot?.name || ride.driver?.name || "D").charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 text-base">
+                    <p className="font-bold text-foreground text-base">
                       {ride.driverSnapshot?.name || ride.driver?.name}
                     </p>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       {ride.driverSnapshot?.phone || ride.driver?.phone || "No phone registered"}
                     </p>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-400 italic">No driver assigned to this ride</p>
+                <p className="text-sm text-muted-foreground italic">No driver assigned to this ride</p>
               )}
             </CardContent>
           </Card>
 
           {/* Vehicle Card */}
-          <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+          <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 py-4 px-5">
-              <CardTitle className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+              <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                 <Car className="h-4 w-4 text-indigo-600" /> Assigned Vehicle
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               {ride.vehicleSnapshot?.plateNumber || ride.vehicle ? (
                 <div className="space-y-3">
-                  <p className="font-bold text-slate-900 text-base">
+                  <p className="font-bold text-foreground text-base">
                     {ride.vehicleSnapshot?.make || ride.vehicle?.make} {ride.vehicleSnapshot?.model || ride.vehicle?.model}
                   </p>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm bg-slate-100 px-3 py-1.5 rounded font-bold border border-slate-200 text-slate-800">
+                    <span className="font-mono text-sm bg-muted px-3 py-1.5 rounded font-bold border border-border text-foreground">
                       {ride.vehicleSnapshot?.plateNumber || ride.vehicle?.plateNumber}
                     </span>
                     {(ride.vehicleSnapshot?.vehicleType || ride.vehicle?.vehicleType) && (
-                      <span className="text-sm text-slate-500">
+                      <span className="text-sm text-muted-foreground">
                         {ride.vehicleSnapshot?.vehicleType || ride.vehicle?.vehicleType}
                       </span>
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-400 italic">No vehicle assigned to this ride</p>
+                <p className="text-sm text-muted-foreground italic">No vehicle assigned to this ride</p>
               )}
             </CardContent>
           </Card>
 
           {/* Ride Workflow Actions */}
-          <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+          <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100 py-4 px-5">
-              <CardTitle className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+              <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider">
                 Ride Actions
               </CardTitle>
             </CardHeader>
@@ -605,7 +605,7 @@ export default function RideDetailPage() {
                   {ride.status !== "COMPLETED" && ride.status !== "CANCELLED" && (
                     <Button
                       variant="outline"
-                      className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 py-3"
+                      className="w-full border-border text-foreground hover:bg-muted/50 py-3"
                       onClick={() => handleStatusChange("COMPLETED")}
                       disabled={updatingStatus}
                     >

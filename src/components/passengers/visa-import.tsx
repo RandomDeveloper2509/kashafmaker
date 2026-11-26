@@ -331,7 +331,7 @@ export function VisaImportButton({
                         ? "bg-red-100 text-red-700"
                         : s.status === "scanning"
                         ? "bg-amber-100 text-amber-700"
-                        : "bg-slate-100 text-slate-600"
+                        : "bg-muted text-muted-foreground"
                     )}
                   >
                     {s.confirmed ? (
@@ -348,8 +348,8 @@ export function VisaImportButton({
             {current && (
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* Preview panel */}
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                  <div className="border-b border-slate-200 px-4 py-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                <div className="overflow-hidden rounded-xl border border-border bg-muted/50">
+                  <div className="border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {current.file.name}
                   </div>
                   <div className="flex min-h-[280px] items-center justify-center p-3">
@@ -364,7 +364,7 @@ export function VisaImportButton({
                       <iframe
                         title="Visa PDF preview"
                         src={current.previewUrl}
-                        className="h-[420px] w-full rounded-md bg-white"
+                        className="h-[420px] w-full rounded-md bg-card"
                       />
                     )}
                   </div>
@@ -408,7 +408,7 @@ export function VisaImportButton({
                     </div>
                   )}
                   {current.result && !current.confirmed && (
-                    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs">
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50/80 px-3 py-2 text-xs">
                       <span className="flex items-center gap-1.5 font-medium">
                         {current.result.method === "ai_vision" ? (
                           <>
@@ -418,11 +418,11 @@ export function VisaImportButton({
                         ) : (
                           <>
                             <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
-                            <span className="text-slate-700">Extracted via {methodLabel(current.result.method)}</span>
+                            <span className="text-foreground">Extracted via {methodLabel(current.result.method)}</span>
                           </>
                         )}
                       </span>
-                      <span className="text-slate-500 text-[11px]">
+                      <span className="text-muted-foreground text-[11px]">
                         Review fields below
                       </span>
                     </div>
@@ -443,7 +443,7 @@ export function VisaImportButton({
                   })}
 
                   {/* Navigation + actions */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
                     <div className="flex gap-2">
                       {scans.length > 1 && (
                         <>
@@ -542,7 +542,7 @@ function ReviewField({
           status === "ok" && "border-emerald-300"
         )}
       />
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1 text-xs text-muted-foreground">
         {status === "missing"
           ? "Missing — leave blank unless you can read it from the document."
           : status === "needs_review"

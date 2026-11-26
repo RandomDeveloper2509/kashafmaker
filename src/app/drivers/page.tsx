@@ -253,9 +253,9 @@ export default function DriversPage() {
       {/* Filter and Search Bar */}
       <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
+            className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
             placeholder="Search drivers by name, iqama, or phone…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -273,7 +273,7 @@ export default function DriversPage() {
         />
       </div>
 
-      <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+      <Card className="border border-border shadow-sm rounded-xl overflow-hidden">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-16">
@@ -294,79 +294,79 @@ export default function DriversPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/80">
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-border bg-muted/50/80">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Driver
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Iqama No
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Contact
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">
                       Nationality
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">
                       Assigned Vehicle
                     </th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="px-5 py-3.5 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-border bg-card">
                   {drivers.map((d) => (
-                    <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={d.id} className="hover:bg-muted/50/80 transition-colors">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className={`h-9 w-9 rounded-full flex items-center justify-center font-bold text-xs ${
                             d.status === "ACTIVE"
                               ? "bg-indigo-50 border border-indigo-100 text-indigo-700"
-                              : "bg-slate-100 border border-slate-200 text-slate-400"
+                              : "bg-muted border border-border text-muted-foreground"
                           }`}>
                             {d.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-semibold text-slate-900 text-sm">{d.name}</p>
-                            {d.nameAr && <p className="text-xs text-slate-400">{d.nameAr}</p>}
+                            <p className="font-semibold text-foreground text-sm">{d.name}</p>
+                            {d.nameAr && <p className="text-xs text-muted-foreground">{d.nameAr}</p>}
                           </div>
                         </div>
                       </td>
 
                       <td className="px-5 py-4">
                         {d.iqamaNumber ? (
-                          <span className="font-mono text-xs bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md font-semibold border border-slate-200">
+                          <span className="font-mono text-xs bg-muted text-foreground px-2.5 py-1 rounded-md font-semibold border border-border">
                             {d.iqamaNumber}
                           </span>
                         ) : (
-                          <span className="text-slate-400 italic text-xs">—</span>
+                          <span className="text-muted-foreground italic text-xs">—</span>
                         )}
                       </td>
 
-                      <td className="px-5 py-4 text-xs text-slate-600 font-medium">
+                      <td className="px-5 py-4 text-xs text-muted-foreground font-medium">
                         {d.phone || "—"}
                       </td>
 
-                      <td className="px-5 py-4 text-xs text-slate-600 hidden sm:table-cell">
+                      <td className="px-5 py-4 text-xs text-muted-foreground hidden sm:table-cell">
                         {d.nationality || "—"}
                       </td>
 
                       <td className="px-5 py-4 hidden md:table-cell">
                         {d.assignments[0]?.vehicle ? (
                           <div className="text-xs">
-                            <p className="font-semibold text-slate-800">
+                            <p className="font-semibold text-foreground">
                               {d.assignments[0].vehicle.make} {d.assignments[0].vehicle.model}
                             </p>
-                            <span className="font-mono text-[11px] text-slate-400">
+                            <span className="font-mono text-[11px] text-muted-foreground">
                               {d.assignments[0].vehicle.plateNumber}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic text-xs">Unassigned</span>
+                          <span className="text-muted-foreground italic text-xs">Unassigned</span>
                         )}
                       </td>
 
@@ -376,7 +376,7 @@ export default function DriversPage() {
                             <StatusDot status="success" /> Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-500">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted border border-border px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
                             <StatusDot status="warning" /> Disabled
                           </span>
                         )}
@@ -388,7 +388,7 @@ export default function DriversPage() {
                           <button
                             type="button"
                             onClick={() => openEditModal(d)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors shadow-sm"
+                            className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/50 hover:text-indigo-600 transition-colors shadow-sm"
                             title="Edit driver details"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -525,7 +525,7 @@ export default function DriversPage() {
             placeholder="Driver notes..."
             rows={2}
           />
-          <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+          <div className="flex gap-3 justify-end pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)} disabled={saving}>
               Cancel
             </Button>

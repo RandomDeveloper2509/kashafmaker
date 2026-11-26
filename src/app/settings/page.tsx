@@ -208,7 +208,7 @@ export default function SettingsPage() {
         return "bg-blue-50 text-blue-700 border-blue-200";
       case "OPERATOR":
       default:
-        return "bg-slate-100 text-slate-700 border-slate-200";
+        return "bg-muted text-foreground border-border";
     }
   };
 
@@ -232,7 +232,7 @@ export default function SettingsPage() {
                 ...templates.map((t) => ({ value: t.id, label: t.name })),
               ]}
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Company profile is edited under Companies. That data is injected into Kashaf PDFs automatically.
             </p>
             <Button onClick={saveSettings}>Save Kashaf Settings</Button>
@@ -269,11 +269,11 @@ export default function SettingsPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>User Management</CardTitle>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Manage panel access, assign administrative roles, update profiles, or reset passwords.
               </p>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
               <Shield className="h-4 w-4 text-indigo-600" />
               <span>{users.length} Users Registered</span>
             </div>
@@ -281,8 +281,8 @@ export default function SettingsPage() {
 
           <CardContent className="space-y-6">
             {/* Create User Form */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <div className="rounded-xl border border-border bg-muted/50/70 p-4">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <UserPlus className="h-4 w-4 text-indigo-600" />
                 <span>Create New User</span>
               </h3>
@@ -329,10 +329,10 @@ export default function SettingsPage() {
             </div>
 
             {/* Users Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <div className="overflow-x-auto rounded-xl border border-border bg-card">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-500 font-semibold uppercase tracking-wider">
+                  <tr className="border-b border-border bg-muted/50/80 text-muted-foreground font-semibold uppercase tracking-wider">
                     <th className="px-4 py-3 text-left">User</th>
                     <th className="px-4 py-3 text-left">Email</th>
                     <th className="px-4 py-3 text-left">Role</th>
@@ -340,16 +340,16 @@ export default function SettingsPage() {
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {loadingUsers ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-400">
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground">
                         Loading user directory...
                       </td>
                     </tr>
                   ) : users.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-400">
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground">
                         No users registered yet.
                       </td>
                     </tr>
@@ -357,14 +357,14 @@ export default function SettingsPage() {
                     users.map((u) => {
                       const isCurrent = u.id === currentUserId || u.email === currentUserEmail;
                       return (
-                        <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                        <tr key={u.id} className="hover:bg-muted/30 transition-colors">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2.5">
                               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-xs shadow-xs">
                                 {u.name.charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <span className="font-semibold text-slate-800">{u.name}</span>
+                                <span className="font-semibold text-foreground">{u.name}</span>
                                 {isCurrent && (
                                   <span className="ml-2 rounded bg-indigo-100 px-1.5 py-0.5 text-[9px] font-bold text-indigo-700">
                                     You
@@ -373,7 +373,7 @@ export default function SettingsPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-slate-600 font-mono text-[11px]">{u.email}</td>
+                          <td className="px-4 py-3 text-muted-foreground font-mono text-[11px]">{u.email}</td>
                           <td className="px-4 py-3">
                             <span
                               className={cn(
@@ -390,7 +390,7 @@ export default function SettingsPage() {
                                 "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 u.isActive
                                   ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-slate-100 text-slate-500"
+                                  : "bg-muted text-muted-foreground"
                               )}
                             >
                               <span
@@ -407,7 +407,7 @@ export default function SettingsPage() {
                               <button
                                 onClick={() => openEditModal(u)}
                                 type="button"
-                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-colors font-medium border border-slate-200 cursor-pointer"
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground hover:bg-accent hover:text-indigo-600 transition-colors font-medium border border-border cursor-pointer"
                                 title="Edit user"
                               >
                                 <Pencil className="h-3 w-3" />
@@ -421,8 +421,8 @@ export default function SettingsPage() {
                                 className={cn(
                                   "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors border cursor-pointer",
                                   isCurrent
-                                    ? "opacity-30 cursor-not-allowed text-slate-400 border-slate-100"
-                                    : "text-slate-600 hover:text-red-600 hover:bg-red-50 border-slate-200"
+                                    ? "opacity-30 cursor-not-allowed text-muted-foreground border-border"
+                                    : "text-muted-foreground hover:text-red-600 hover:bg-red-50 border-border"
                                 )}
                                 title={isCurrent ? "You cannot delete your own account" : "Delete user"}
                               >
@@ -446,22 +446,22 @@ export default function SettingsPage() {
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-border animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
                   <Pencil className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base leading-tight">Edit User</h3>
-                  <p className="text-xs text-slate-400">{editingUser.email}</p>
+                  <h3 className="font-bold text-foreground text-base leading-tight">Edit User</h3>
+                  <p className="text-xs text-muted-foreground">{editingUser.email}</p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingUser(null)}
-                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
+                className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-muted-foreground transition-colors cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -507,15 +507,15 @@ export default function SettingsPage() {
                   value={editForm.password}
                   onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
                 />
-                <p className="text-[10px] text-slate-400 mt-1">
+                <p className="text-[10px] text-muted-foreground mt-1">
                   Only enter a new password if you wish to reset it for this user.
                 </p>
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50/70 p-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-800">Account Status</label>
-                  <p className="text-[10px] text-slate-500">Enable or disable login access</p>
+                  <label className="text-xs font-semibold text-foreground">Account Status</label>
+                  <p className="text-[10px] text-muted-foreground">Enable or disable login access</p>
                 </div>
                 <Select
                   value={editForm.isActive ? "true" : "false"}
@@ -528,7 +528,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="mt-6 flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="mt-6 flex justify-end gap-2 pt-2 border-t border-border">
                 <Button
                   type="button"
                   variant="outline"
@@ -554,7 +554,7 @@ export default function SettingsPage() {
       {deletingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-200"
+            className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl border border-border animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
@@ -562,13 +562,13 @@ export default function SettingsPage() {
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-base leading-tight">Delete User</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Permanent account removal</p>
+                <h3 className="font-bold text-foreground text-base leading-tight">Delete User</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Permanent account removal</p>
               </div>
             </div>
 
-            <p className="mt-4 text-xs text-slate-600 leading-relaxed">
-              Are you sure you want to delete <strong className="text-slate-900">{deletingUser.name}</strong> (
+            <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to delete <strong className="text-foreground">{deletingUser.name}</strong> (
               {deletingUser.email})? This user will immediately lose access to the system.
             </p>
 

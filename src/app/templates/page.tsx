@@ -103,7 +103,7 @@ export default function TemplatesPage() {
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-slate-50">
+                <tr className="border-b bg-muted/50">
                   <th className="px-4 py-3 text-left">Name</th>
                   <th className="px-4 py-3 text-left">Version</th>
                   <th className="px-4 py-3 text-left">Pages</th>
@@ -114,7 +114,7 @@ export default function TemplatesPage() {
               </thead>
               <tbody>
                 {templates.map((t) => (
-                  <tr key={t.id} className="border-b hover:bg-slate-50/50">
+                  <tr key={t.id} className="border-b hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium">
                       {t.name}
                       {t.isDefault && (
@@ -158,7 +158,7 @@ export default function TemplatesPage() {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">PDF File</label>
+            <label className="block text-sm font-medium text-foreground mb-1.5">PDF File</label>
             <input
               type="file"
               accept="application/pdf"
@@ -175,7 +175,7 @@ export default function TemplatesPage() {
             />
             Set as default template
           </label>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Upload your official 2-page NBIS Kashaf PDF. Fields are filled automatically from company, driver, vehicle, ride, and passengers.
           </p>
           <div className="flex justify-end gap-2">

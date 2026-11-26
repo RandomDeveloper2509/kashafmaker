@@ -179,9 +179,9 @@ export default function RidesPage() {
       {/* Filters */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
-            className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            className="w-full rounded-lg border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
             placeholder="Search by ride number, pickup, or destination…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -201,7 +201,7 @@ export default function RidesPage() {
         />
       </div>
 
-      <Card className="border border-slate-200 shadow-sm">
+      <Card className="border border-border shadow-sm">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-16">
@@ -233,32 +233,32 @@ export default function RidesPage() {
                   <>
                     <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/70">
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap w-32">
+                  <tr className="border-b border-border bg-muted/50/70">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap w-32">
                       Ride #
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap w-28">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap w-28">
                       Date
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide w-64">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide w-64">
                       Route
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden md:table-cell w-48">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell w-48">
                       Driver
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden lg:table-cell w-40">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell w-40">
                       Vehicle
                     </th>
-                    <th className="px-4 py-4 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide w-16">
+                    <th className="px-4 py-4 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide w-16">
                       Pax
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap w-36">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap w-36">
                       Status
                     </th>
-                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide hidden sm:table-cell whitespace-nowrap w-40">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden sm:table-cell whitespace-nowrap w-40">
                       Kashaf Document
                     </th>
-                    <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide sticky right-0 bg-slate-50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10 w-44">
+                    <th className="px-4 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide sticky right-0 bg-muted/50/95 backdrop-blur shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10 w-44">
                       Actions
                     </th>
                   </tr>
@@ -267,21 +267,21 @@ export default function RidesPage() {
                   {pageRides.map((ride) => {
                     const kashafDoc = ride.kashafDocuments[0];
                     return (
-                      <tr key={ride.id} className="group hover:bg-slate-50/80 transition-colors">
+                      <tr key={ride.id} className="group hover:bg-muted/50/80 transition-colors">
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="font-mono text-xs whitespace-nowrap bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md font-semibold border border-slate-200/60 inline-block">
+                          <span className="font-mono text-xs whitespace-nowrap bg-muted text-foreground px-2.5 py-1 rounded-md font-semibold border border-border/60 inline-block">
                             {ride.rideNumber}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 text-xs text-slate-600 whitespace-nowrap font-medium">
+                        <td className="px-4 py-3.5 text-xs text-muted-foreground whitespace-nowrap font-medium">
                           {formatDate(ride.date)}
                         </td>
                         <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-1.5 text-xs text-slate-700">
+                          <div className="flex items-center gap-1.5 text-xs text-foreground">
                             <MapPin className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                            <span className="font-semibold text-slate-900 truncate" title={ride.pickup}>{ride.pickup}</span>
-                            <ArrowRight className="h-3 w-3 text-slate-400 shrink-0" />
-                            <span className="truncate text-slate-600" title={ride.destination}>{ride.destination}</span>
+                            <span className="font-semibold text-foreground truncate" title={ride.pickup}>{ride.pickup}</span>
+                            <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="truncate text-muted-foreground" title={ride.destination}>{ride.destination}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3.5 hidden md:table-cell">
@@ -290,29 +290,29 @@ export default function RidesPage() {
                               <div className="h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700 shrink-0">
                                 {ride.driver.name.charAt(0)}
                               </div>
-                              <span className="text-slate-600 truncate" title={ride.driver.name}>
+                              <span className="text-muted-foreground truncate" title={ride.driver.name}>
                                 {ride.driver.name}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-400 italic">Unassigned</span>
+                            <span className="text-xs text-muted-foreground italic">Unassigned</span>
                           )}
                         </td>
                         <td className="px-4 py-3.5 hidden lg:table-cell">
                           {ride.vehicle ? (
                             <div className="text-xs">
-                              <p className="font-medium text-slate-800 truncate max-w-[120px]" title={`${ride.vehicle.make} ${ride.vehicle.model}`}>
+                              <p className="font-medium text-foreground truncate max-w-[120px]" title={`${ride.vehicle.make} ${ride.vehicle.model}`}>
                                 {ride.vehicle.make} {ride.vehicle.model}
                               </p>
-                              <p className="text-[10px] font-mono text-slate-400">{ride.vehicle.plateNumber}</p>
+                              <p className="text-[10px] font-mono text-muted-foreground">{ride.vehicle.plateNumber}</p>
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-400 italic">Unassigned</span>
+                            <span className="text-xs text-muted-foreground italic">Unassigned</span>
                           )}
                         </td>
                         <td className="px-4 py-3.5 text-center">
-                          <div className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
-                            <Users className="h-3 w-3 text-slate-500" />
+                          <div className="inline-flex items-center gap-1 text-xs font-semibold text-foreground bg-muted px-2 py-0.5 rounded-full">
+                            <Users className="h-3 w-3 text-muted-foreground" />
                             {ride._count?.passengers ?? 0}
                           </div>
                         </td>
@@ -334,7 +334,7 @@ export default function RidesPage() {
                               </Badge>
                               <a
                                 href={`/api/documents/${kashafDoc.id}?download=true`}
-                                className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                className="p-1 rounded text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                                 title="Download PDF"
                               >
                                 <Download className="h-3.5 w-3.5" />
@@ -352,13 +352,13 @@ export default function RidesPage() {
                             <Badge variant="default" className="text-[11px] py-0.5 px-2">Pending</Badge>
                           )}
                         </td>
-                        <td className="px-4 py-3.5 text-right sticky right-0 bg-white group-hover:bg-slate-50/90 transition-colors shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
+                        <td className="px-4 py-3.5 text-right sticky right-0 bg-card group-hover:bg-muted/50/90 transition-colors shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.08)] z-10">
                           <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                             <Link
                               href={`/rides/${ride.id}/edit`}
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 shadow-sm transition-all"
+                              className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 shadow-sm transition-all"
                             >
-                              <Edit className="h-3.5 w-3.5 text-slate-500 group-hover:text-indigo-600" /> Edit
+                              <Edit className="h-3.5 w-3.5 text-muted-foreground group-hover:text-indigo-600" /> Edit
                             </Link>
                             <Link
                               href={`/rides/${ride.id}`}
@@ -382,8 +382,8 @@ export default function RidesPage() {
                 </tbody>
               </table>
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 bg-white">
-                      <p className="text-xs text-slate-500">
+                    <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-card">
+                      <p className="text-xs text-muted-foreground">
                         Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, rides.length)} of {rides.length} rides
                       </p>
                       <div className="flex items-center gap-1">
@@ -391,7 +391,7 @@ export default function RidesPage() {
                           type="button"
                           disabled={page === 1}
                           onClick={() => setPage((p) => p - 1)}
-                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                           ← Prev
                         </button>
@@ -403,7 +403,7 @@ export default function RidesPage() {
                             className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
                               p === page
                                 ? "border-indigo-500 bg-indigo-600 text-white"
-                                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                : "border-border bg-card text-muted-foreground hover:bg-muted/50"
                             }`}
                           >
                             {p}
@@ -413,7 +413,7 @@ export default function RidesPage() {
                           type="button"
                           disabled={page === totalPages}
                           onClick={() => setPage((p) => p + 1)}
-                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                           Next →
                         </button>
@@ -449,39 +449,39 @@ export default function RidesPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Select the date range of rides to export. The downloaded Excel sheet will include Kashaf ID, Date, Destination, Driver, Vehicle, Fare, and Referral with an automated fare total formula.
           </p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-foreground mb-1">
                 Date From
               </label>
               <input
                 type="date"
                 value={exportStartDate}
                 onChange={(e) => setExportStartDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
               {exportStartDate && (
-                <p className="mt-0.5 text-[10px] text-slate-400">
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
                   {exportStartDate.split("-").reverse().join("-")}
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-foreground mb-1">
                 Date To
               </label>
               <input
                 type="date"
                 value={exportEndDate}
                 onChange={(e) => setExportEndDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               />
               {exportEndDate && (
-                <p className="mt-0.5 text-[10px] text-slate-400">
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
                   {exportEndDate.split("-").reverse().join("-")}
                 </p>
               )}
@@ -490,7 +490,7 @@ export default function RidesPage() {
 
           {/* Quick presets */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[11px] font-medium text-slate-400">Quick:</span>
+            <span className="text-[11px] font-medium text-muted-foreground">Quick:</span>
             <button
               type="button"
               onClick={() => {
@@ -498,7 +498,7 @@ export default function RidesPage() {
                 setExportStartDate(d);
                 setExportEndDate(d);
               }}
-              className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+              className="rounded border border-border bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-accent"
             >
               Today
             </button>
@@ -511,7 +511,7 @@ export default function RidesPage() {
                 setExportStartDate(localDateStr(start));
                 setExportEndDate(localDateStr(end));
               }}
-              className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+              className="rounded border border-border bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-accent"
             >
               Last 7 Days
             </button>
@@ -523,7 +523,7 @@ export default function RidesPage() {
                 setExportStartDate(localDateStr(first));
                 setExportEndDate(localDateStr(now));
               }}
-              className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+              className="rounded border border-border bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-accent"
             >
               This Month
             </button>
@@ -536,18 +536,18 @@ export default function RidesPage() {
                 setExportStartDate(localDateStr(start));
                 setExportEndDate(localDateStr(end));
               }}
-              className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+              className="rounded border border-border bg-muted/50 px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-accent"
             >
               Last Month
             </button>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
             <button
               type="button"
               disabled={isExporting}
               onClick={() => setExportModalOpen(false)}
-              className="rounded-lg border border-slate-300 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
             >
               Cancel
             </button>
