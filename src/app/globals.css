@@ -67,6 +67,13 @@ body {
   animation: fade-in 0.15s ease-out;
 }
 
+/* New row flash animation for live table */
+@keyframes highlight-new {
+  0%   { background-color: color-mix(in srgb, #3b82f6 18%, transparent); }
+  60%  { background-color: color-mix(in srgb, #3b82f6 8%, transparent); }
+  100% { background-color: transparent; }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

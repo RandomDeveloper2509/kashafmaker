@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
@@ -19,6 +19,7 @@ import {
   Play,
   FileUp,
   SlidersHorizontal,
+  Zap,
 } from "lucide-react";
 import {
   CheckCircleIcon,
@@ -141,31 +142,113 @@ function getStatusConfig(status: string) {
       return {
         label: "Completed",
         className: "text-(--status-completed)",
+        rowClassName: "",
         Icon: CheckCircleIcon,
         spinning: false,
       };
     case "IN_PROGRESS":
       return {
-        label: "In Progress",
+        label: "Processing",
         className: "text-(--status-processing)",
+        rowClassName: "bg-blue-50/40 dark:bg-blue-950/10",
         Icon: SpinnerGapIcon,
         spinning: true,
       };
     case "CANCELLED":
       return {
-        label: "Cancelled",
+        label: "Exception",
         className: "text-(--status-exception)",
+        rowClassName: "bg-red-50/40 dark:bg-red-950/10",
         Icon: StatusWarningIcon,
         spinning: false,
       };
     default:
       return {
         label: "Scheduled",
-        className: "text-(--status-processing)",
-        Icon: SpinnerGapIcon,
+        className: "text-amber-600 dark:text-amber-400",
+        rowClassName: "",
+        Icon: TallieClockIcon,
         spinning: false,
       };
   }
+}
+
+/** Kashaf readiness confidence score 0-100 */
+function getConfidence(ride: TodayRide): {
+  score: number;
+  label: string;
+  className: string;
+} {
+  const hasKashaf = ride.kashafDocuments.length > 0;
+  const hasDriver = Boolean(ride.driver);
+  const hasVehicle = Boolean(ride.vehicle);
+  const hasPax = ride._count.passengers > 0;
+
+  const score =
+    (hasKashaf ? 40 : 0) +
+    (hasDriver ? 25 : 0) +
+    (hasVehicle ? 20 : 0) +
+    (hasPax ? 15 : 0);
+
+  if (score >= 85)
+    return { score, label: `${score}%`, className: "text-(--status-completed)" };
+  if (score >= 60)
+    return { score, label: `${score}%`, className: "text-amber-600 dark:text-amber-400" };
+  return {
+    score,
+    label: `${score}%`,
+    className: "text-(--status-exception)",
+  };
+}
+
+/** Pill tags — mirrors Oracle ERP / SharePoint / Concur from the reference image */
+function RideTags({ ride }: { ride: TodayRide }) {
+  const hasKashaf = ride.kashafDocuments.length > 0;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {hasKashaf ? (
+        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+          Kashaf PDF
+        </span>
+      ) : (
+        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+          No Kashaf
+        </span>
+      )}
+      <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400">
+        {ride._count.passengers} Pax
+      </span>
+      {ride.driver && (
+        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
+          Assigned
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Animated confidence bar */
+function ConfidenceBar({ score, className }: { score: number; className: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className={cn("text-sm font-semibold tabular-nums", className)}>
+        {score}%
+      </span>
+      <div className="h-1 w-16 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn(
+            "h-full rounded-full transition-all duration-700",
+            score >= 85
+              ? "bg-(--status-completed)"
+              : score >= 60
+              ? "bg-amber-500"
+              : "bg-(--status-exception)"
+          )}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+    </div>
+  );
 }
 
 const tableHeadClassName =
@@ -179,6 +262,9 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedRide, setSelectedRide] = useState<TodayRide | null>(null);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [newRowIds, setNewRowIds] = useState<Set<string>>(new Set());
+  const prevRideIds = useRef<Set<string>>(new Set());
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const userName = session?.user?.name?.split(" ")[0] || "there";
 
@@ -187,6 +273,19 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       const res = await fetch("/api/dashboard", { cache: "no-store" });
       const payload = await res.json();
       if (payload && typeof payload.totalRides === "number") {
+        // Detect new rows for flash animation
+        const incomingIds = new Set<string>(
+          (payload.todayRidesList as TodayRide[]).map((r) => r.id)
+        );
+        const freshIds = new Set<string>(
+          [...incomingIds].filter((id) => !prevRideIds.current.has(id))
+        );
+        if (freshIds.size > 0) {
+          setNewRowIds(freshIds);
+          setTimeout(() => setNewRowIds(new Set()), 1500);
+        }
+        prevRideIds.current = incomingIds;
+
         setData(payload);
         setLastSynced(new Date());
       } else if (!data) {
@@ -237,6 +336,7 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       "Vehicle",
       "Passengers",
       "Kashaf PDF",
+      "Readiness %",
     ];
     const rows = filteredRides.map((r) => [
       r.status,
@@ -248,6 +348,7 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       r.vehicle ? `${r.vehicle.make} ${r.vehicle.model} (${r.vehicle.plateNumber})` : "Unassigned",
       String(r._count.passengers),
       r.kashafDocuments.length > 0 ? "Ready" : "Pending",
+      `${getConfidence(r).score}%`,
     ]);
     const csv = [header, ...rows]
       .map((cells) => cells.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(","))
@@ -257,7 +358,7 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `rihal-rides-${statusFilter.toLowerCase()}.csv`;
+    link.download = `rihal-live-rides-${statusFilter.toLowerCase()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -444,17 +545,24 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
         </div>
       </section>
 
-      {/* Tallie Live Ride Feed Table */}
+      {/* ── Current Live Rides — Tallie "processing batch" style ── */}
       <section className="flex flex-col gap-4">
+        {/* Section header */}
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="flex flex-col gap-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-medium tracking-tight">Current Live Rides</h2>
               <LiveBadge live={isLive} size="sm" />
+              {isLive && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                  <Zap className="size-3 text-amber-500" />
+                  Live transaction with auto scrolling
+                </span>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">
               {isLive
-                ? `Live ride tracking with auto-refresh${
+                ? `Auto-refresh every 10 s${
                     lastSynced
                       ? ` • Updated ${lastSynced.toLocaleTimeString([], {
                           hour: "2-digit",
@@ -531,27 +639,31 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-border bg-zinc-50/40 dark:bg-card/40">
+        {/* Table — styled like "Current processing Batch" */}
+        <div
+          ref={tableRef}
+          className="overflow-hidden rounded-xl border border-border bg-background shadow-xs dark:bg-card"
+        >
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
+              <TableRow className="hover:bg-transparent border-b border-border">
                 <TableHead className={cn(tableHeadClassName, "min-w-36 px-4")}>
                   Status
                 </TableHead>
                 <TableHead className={cn(tableHeadClassName, "min-w-40 px-3")}>
                   Ride ID
                 </TableHead>
+                <TableHead className={cn(tableHeadClassName, "min-w-36 px-3 hidden sm:table-cell")}>
+                  Driver
+                </TableHead>
                 <TableHead className={cn(tableHeadClassName, "min-w-48 px-3")}>
                   Route
                 </TableHead>
-                <TableHead className={cn(tableHeadClassName, "hidden min-w-44 px-3 md:table-cell")}>
-                  Driver & Vehicle
+                <TableHead className={cn(tableHeadClassName, "hidden min-w-40 px-3 md:table-cell")}>
+                  Sources
                 </TableHead>
-                <TableHead className={cn(tableHeadClassName, "hidden min-w-48 px-3 lg:table-cell")}>
-                  Manifest & Tags
-                </TableHead>
-                <TableHead className={cn(tableHeadClassName, "px-4 text-right")}>
-                  Actions
+                <TableHead className={cn(tableHeadClassName, "px-4 text-right min-w-24")}>
+                  Readiness
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -582,6 +694,8 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                   const kashafDocId = ride.kashafDocuments[0]?.id;
                   const status = getStatusConfig(ride.status);
                   const StatusIcon = status.Icon;
+                  const conf = getConfidence(ride);
+                  const isNew = newRowIds.has(ride.id);
 
                   return (
                     <TableRow
@@ -594,9 +708,15 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                           setSelectedRide(ride);
                         }
                       }}
-                      className="h-18 cursor-pointer bg-background transition-colors hover:bg-muted/50"
+                      className={cn(
+                        "h-16 cursor-pointer border-b border-border/60 transition-all duration-300",
+                        status.rowClassName,
+                        "hover:bg-muted/40",
+                        isNew && "animate-[highlight-new_1.5s_ease-out]"
+                      )}
                     >
-                      <TableCell className="px-4 py-3.5">
+                      {/* Status */}
+                      <TableCell className="px-4 py-3">
                         <div
                           className={cn(
                             "inline-flex items-center gap-2 text-sm font-medium",
@@ -611,29 +731,27 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                           />
                           {status.label}
                         </div>
+                        {ride.status === "CANCELLED" && (
+                          <p className="mt-0.5 text-[10px] font-medium text-(--status-exception) opacity-80">
+                            Route Cancelled
+                          </p>
+                        )}
                       </TableCell>
 
-                      <TableCell className="px-3 py-3.5">
+                      {/* Ride ID */}
+                      <TableCell className="px-3 py-3">
                         <div className="flex flex-col gap-0.5">
                           <span className="font-mono text-sm font-medium tracking-tight text-foreground">
                             {ride.rideNumber}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            Time: {ride.time || "—"}
+                            {ride.time || "—"}
                           </span>
                         </div>
                       </TableCell>
 
-                      <TableCell className="px-3 py-3.5">
-                        <div className="flex items-center gap-1.5 text-sm font-medium tracking-tight text-foreground">
-                          <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
-                          <span className="max-w-[115px] truncate">{ride.pickup}</span>
-                          <ArrowRight className="size-3 shrink-0 text-muted-foreground" />
-                          <span className="max-w-[115px] truncate">{ride.destination}</span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="hidden px-3 py-3.5 md:table-cell">
+                      {/* Driver */}
+                      <TableCell className="hidden px-3 py-3 sm:table-cell">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-sm font-medium tracking-tight text-foreground">
                             {ride.driver?.name || (
@@ -648,56 +766,52 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                         </div>
                       </TableCell>
 
-                      <TableCell className="hidden px-3 py-3.5 lg:table-cell">
-                        <div className="flex flex-wrap gap-1.5">
-                          <span
-                            className={cn(
-                              "rounded px-2 py-0.5 text-xs font-medium tracking-tight",
-                              hasKashaf
-                                ? "bg-(--source-oracle)/15 text-(--source-oracle)"
-                                : "bg-muted text-muted-foreground"
-                            )}
-                          >
-                            {hasKashaf ? "Kashaf Ready" : "No Kashaf"}
-                          </span>
-                          <span className="rounded bg-(--source-sharepoint)/15 px-2 py-0.5 text-xs tracking-tight text-(--source-sharepoint)">
-                            {ride._count.passengers} Pax
-                          </span>
-                          {ride.driver && (
-                            <span className="rounded bg-(--source-concur)/15 px-2 py-0.5 text-xs tracking-tight text-(--source-concur)">
-                              Assigned
-                            </span>
-                          )}
+                      {/* Route */}
+                      <TableCell className="px-3 py-3">
+                        <div className="flex items-center gap-1.5 text-sm font-medium tracking-tight text-foreground">
+                          <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+                          <span className="max-w-[90px] truncate">{ride.pickup}</span>
+                          <ArrowRight className="size-3 shrink-0 text-muted-foreground" />
+                          <span className="max-w-[90px] truncate">{ride.destination}</span>
                         </div>
                       </TableCell>
 
+                      {/* Sources / Tags */}
+                      <TableCell className="hidden px-3 py-3 md:table-cell">
+                        <RideTags ride={ride} />
+                      </TableCell>
+
+                      {/* Readiness / Confidence */}
                       <TableCell
-                        className="px-4 py-3.5 text-right"
+                        className="px-4 py-3 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex items-center justify-end gap-1.5">
-                          {hasKashaf && kashafDocId && (
-                            <a
-                              href={`/api/documents/${kashafDocId}?download=true`}
+                        <div className="flex flex-col items-end gap-1">
+                          <ConfidenceBar score={conf.score} className={conf.className} />
+                          <div className="flex gap-1">
+                            {hasKashaf && kashafDocId && (
+                              <a
+                                href={`/api/documents/${kashafDocId}?download=true`}
+                                className={buttonVariants({
+                                  variant: "outline",
+                                  size: "xs",
+                                  className: "h-6 gap-1 rounded-md px-2 text-[10px]",
+                                })}
+                              >
+                                <Download className="size-3" /> PDF
+                              </a>
+                            )}
+                            <Link
+                              href={`/rides/${ride.id}`}
                               className={buttonVariants({
-                                variant: "outline",
+                                variant: "secondary",
                                 size: "xs",
-                                className: "h-7 gap-1 rounded-md px-2.5 text-xs",
+                                className: "h-6 gap-1 rounded-md px-2 text-[10px]",
                               })}
                             >
-                              <Download className="size-3" /> PDF
-                            </a>
-                          )}
-                          <Link
-                            href={`/rides/${ride.id}`}
-                            className={buttonVariants({
-                              variant: "secondary",
-                              size: "xs",
-                              className: "h-7 gap-1 rounded-md px-2.5 text-xs",
-                            })}
-                          >
-                            Open <ArrowRight className="size-3" />
-                          </Link>
+                              Open <ArrowRight className="size-3" />
+                            </Link>
+                          </div>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -707,6 +821,35 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
             </TableBody>
           </Table>
         </div>
+
+        {/* Live ticker bar */}
+        {isLive && filteredRides.length > 0 && (
+          <div className="flex items-center gap-3 overflow-hidden rounded-lg border border-border/60 bg-zinc-50/80 px-4 py-2.5 dark:bg-card/60">
+            <span className="size-2 shrink-0 animate-pulse rounded-full bg-(--live)" />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground overflow-hidden">
+              <span className="font-medium text-foreground">Live Feed</span>
+              <span className="shrink-0">•</span>
+              <span className="shrink-0">{filteredRides.length} rides in view</span>
+              <span className="shrink-0">•</span>
+              <span className="shrink-0">
+                {filteredRides.filter((r) => r.status === "IN_PROGRESS").length} processing
+              </span>
+              <span className="shrink-0">•</span>
+              <span className="shrink-0">
+                {filteredRides.filter((r) => r.status === "COMPLETED").length} completed
+              </span>
+              {filteredRides.filter((r) => r.status === "CANCELLED").length > 0 && (
+                <>
+                  <span className="shrink-0">•</span>
+                  <span className="shrink-0 text-(--status-exception)">
+                    {filteredRides.filter((r) => r.status === "CANCELLED").length} exception
+                    {filteredRides.filter((r) => r.status === "CANCELLED").length > 1 ? "s" : ""}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Slide-over Ride Quick-View Sheet */}
@@ -724,6 +867,34 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
               </SheetHeader>
 
               <div className="flex flex-col gap-5 p-4 text-sm">
+                {/* Confidence score highlight */}
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-zinc-50 p-3.5 dark:bg-card">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs text-muted-foreground">Readiness Score</p>
+                    <p className={cn("text-2xl font-semibold tabular-nums", getConfidence(selectedRide).className)}>
+                      {getConfidence(selectedRide).label}
+                    </p>
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-700",
+                          getConfidence(selectedRide).score >= 85
+                            ? "bg-(--status-completed)"
+                            : getConfidence(selectedRide).score >= 60
+                            ? "bg-amber-500"
+                            : "bg-(--status-exception)"
+                        )}
+                        style={{ width: `${getConfidence(selectedRide).score}%` }}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Based on Kashaf PDF, driver, vehicle & passengers
+                    </p>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-zinc-50 p-3.5 dark:bg-card">
                   <div>
                     <p className="text-xs text-muted-foreground">Time</p>
@@ -747,6 +918,12 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                         : "Unassigned"}
                     </p>
                   </div>
+                </div>
+
+                {/* Tags */}
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs text-muted-foreground">Tags</p>
+                  <RideTags ride={selectedRide} />
                 </div>
 
                 <div className="flex flex-col gap-2">
