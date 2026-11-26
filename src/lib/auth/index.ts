@@ -28,6 +28,27 @@ declare module "@auth/core/jwt" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id!;
+        token.role = user.role;
+        token.name = user.name;
+      } else if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id },
+          select: { role: true, name: true, email: true, isActive: true },
+        });
+        if (dbUser && dbUser.isActive) {
+          token.role = dbUser.role;
+          token.name = dbUser.name;
+          token.email = dbUser.email;
+        }
+      }
+      return token;
+    },
+  },
   providers: [
     Credentials({
       credentials: {

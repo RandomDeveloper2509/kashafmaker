@@ -21,7 +21,7 @@ interface UserRow {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const currentUserId = session?.user?.id;
   const currentUserEmail = session?.user?.email;
 
@@ -164,6 +164,9 @@ export default function SettingsPage() {
         const updated = await res.json();
         toast("User updated successfully", "success");
         setUsers((prev) => prev.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)));
+        if (updated.id === currentUserId) {
+          await updateSession();
+        }
         setEditingUser(null);
       } else {
         const err = await res.json();
@@ -203,9 +206,9 @@ export default function SettingsPage() {
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "ADMIN":
-        return "bg-purple-50 text-purple-700 border-purple-200";
+        return "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800/60";
       case "MANAGER":
-        return "bg-blue-50 text-blue-700 border-blue-200";
+        return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/60";
       case "OPERATOR":
       default:
         return "bg-muted text-foreground border-border";
