@@ -2,15 +2,23 @@
 
 import type { CSSProperties } from "react";
 import { Sidebar } from "./sidebar";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus, ChevronRight, Home } from "lucide-react";
+import { Plus, ChevronRight, Home, ChevronDown, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToastProvider } from "@/components/ui/toast";
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { WhatsNewButton } from "@/components/announcements/whats-new-modal";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -104,17 +112,55 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </Link>
 
-              <div className="hidden sm:flex items-center gap-2 border-l border-border pl-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted text-xs font-semibold text-foreground">
-                  {userName.charAt(0).toUpperCase()}
-                </div>
-                <div className="hidden md:block text-left">
-                  <p className="text-xs font-medium text-foreground leading-tight">{userName}</p>
-                  <p className="text-[10px] font-medium text-muted-foreground capitalize">
-                    {session?.user?.role?.toLowerCase() || "operator"}
-                  </p>
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  type="button"
+                  aria-label="Account menu"
+                  className="flex items-center gap-2 border-l border-border pl-3 rounded-lg py-1 pr-1 hover:bg-muted/60 transition-colors cursor-pointer outline-none"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-muted text-xs font-semibold text-foreground">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="hidden md:block text-left">
+                    <p className="text-xs font-medium text-foreground leading-tight">{userName}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground capitalize">
+                      {session?.user?.role?.toLowerCase() || "operator"}
+                    </p>
+                  </div>
+                  <ChevronDown className="hidden sm:block h-3.5 w-3.5 text-muted-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="tallie-dashboard w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="leading-tight">
+                      <p className="text-sm font-medium text-foreground">{userName}</p>
+                      {session?.user?.email && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {session.user.email}
+                        </p>
+                      )}
+                      <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {session?.user?.role || "OPERATOR"}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {session?.user?.role === "ADMIN" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings">
+                        <Settings />
+                        Settings &amp; Users
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                  >
+                    <LogOut />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 
