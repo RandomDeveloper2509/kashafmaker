@@ -22,6 +22,8 @@ import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-button";
+import { ToggleIcon } from "@/components/watermelon/tallie-dashboard/components/tallie/icons";
+import { useTheme } from "@/components/watermelon/tallie-dashboard/components/tallie/theme-provider";
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent,
@@ -92,6 +94,8 @@ export function Sidebar({ userName }: { userName?: string }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { state, isMobile, setOpenMobile, toggleSidebar } = useSidebar();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const isCollapsed = state === "collapsed" && !isMobile;
 
   const displayName = userName || session?.user?.name || "User";
@@ -182,6 +186,17 @@ export function Sidebar({ userName }: { userName?: string }) {
         </div>
 
         <SidebarMenu className="gap-1">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip={isDark ? "Light Mode" : "Dark Mode"}
+              className={menuButtonClassName}
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+            >
+              <ToggleIcon pressed={isDark} />
+              <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger

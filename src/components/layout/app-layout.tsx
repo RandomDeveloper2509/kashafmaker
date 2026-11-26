@@ -11,6 +11,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { WhatsNewButton } from "@/components/announcements/whats-new-modal";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeProvider } from "@/components/watermelon/tallie-dashboard/components/tallie/theme-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,8 +81,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const userName = session?.user?.name || "User";
 
   return (
-    <ToastProvider>
-      <SidebarProvider
+    <ThemeProvider defaultTheme="light" storageKey="rihal-theme">
+      <ToastProvider>
+        <SidebarProvider
         defaultOpen
         className="tallie-dashboard min-h-svh"
         style={
@@ -171,5 +173,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </SidebarProvider>
     </ToastProvider>
+    </ThemeProvider>
   );
 }
