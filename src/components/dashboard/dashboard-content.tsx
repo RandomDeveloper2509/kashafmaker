@@ -1,27 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import {
   Car,
   Users,
-  Truck,
-  UserCircle,
   FileText,
   Plus,
   Calendar,
   MapPin,
   ArrowRight,
   ArrowUpRight,
-  CheckCircle2,
   Clock,
   Download,
   ScanSearch,
+  Pause,
+  Play,
+  FileUp,
   SlidersHorizontal,
-  AlertCircle,
-  Loader2,
 } from "lucide-react";
+import {
+  CheckCircleIcon,
+  SpinnerGapIcon,
+  StatusWarningIcon,
+  ClockIcon as TallieClockIcon,
+} from "@/components/watermelon/tallie-dashboard/components/tallie/icons";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -92,67 +96,125 @@ const DEFAULT_DASHBOARD_DATA: DashboardData = {
 };
 
 const STATUS_FILTERS = [
-  { value: "ALL", label: "All statuses" },
-  { value: "SCHEDULED", label: "Scheduled" },
-  { value: "IN_PROGRESS", label: "In Progress" },
-  { value: "COMPLETED", label: "Completed" },
-  { value: "CANCELLED", label: "Cancelled" },
+  { value: "ALL", label: "All statuses", icon: SlidersHorizontal },
+  { value: "SCHEDULED", label: "Scheduled", icon: TallieClockIcon },
+  { value: "IN_PROGRESS", label: "In Progress", icon: SpinnerGapIcon },
+  { value: "COMPLETED", label: "Completed", icon: CheckCircleIcon },
+  { value: "CANCELLED", label: "Cancelled", icon: StatusWarningIcon },
 ] as const;
 
-function getStatusDisplay(status: string) {
+function LiveBadge({
+  live,
+  size = "md",
+}: {
+  live: boolean;
+  size?: "md" | "sm";
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center rounded-lg font-medium",
+        live
+          ? "bg-(--live)/10 text-(--live)"
+          : "bg-muted text-muted-foreground",
+        size === "md" && "gap-1.5 px-3.5 py-2 text-xs leading-4.5",
+        size === "sm" &&
+          "gap-1 rounded-md px-2 py-1 text-[10px] leading-none"
+      )}
+    >
+      <span
+        className={cn(
+          "rounded-full",
+          live ? "bg-(--live)" : "bg-muted-foreground",
+          size === "md" ? "size-2" : "size-1.5",
+          live && "live-dot-pulse"
+        )}
+      />
+      {live ? "Live" : "Paused"}
+    </span>
+  );
+}
+
+function getStatusConfig(status: string) {
   switch (status) {
     case "COMPLETED":
       return {
         label: "Completed",
         className: "text-(--status-completed)",
-        Icon: CheckCircle2,
+        Icon: CheckCircleIcon,
+        spinning: false,
       };
     case "IN_PROGRESS":
       return {
         label: "In Progress",
         className: "text-(--status-processing)",
-        Icon: Loader2,
+        Icon: SpinnerGapIcon,
+        spinning: true,
       };
     case "CANCELLED":
       return {
         label: "Cancelled",
         className: "text-(--status-exception)",
-        Icon: AlertCircle,
+        Icon: StatusWarningIcon,
+        spinning: false,
       };
     default:
       return {
-        label: status.replace("_", " "),
-        className: "text-amber-600",
-        Icon: Clock,
+        label: "Scheduled",
+        className: "text-(--status-processing)",
+        Icon: SpinnerGapIcon,
+        spinning: false,
       };
   }
 }
+
+const tableHeadClassName =
+  "h-12.5 bg-zinc-50 text-sm font-medium tracking-tight text-muted-foreground dark:bg-card";
 
 export function DashboardContent({ initialData }: { initialData?: DashboardData }) {
   const { data: session } = useSession();
   const [data, setData] = useState<DashboardData | null>(initialData ?? null);
   const [loading, setLoading] = useState(!initialData);
+  const [isLive, setIsLive] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedRide, setSelectedRide] = useState<TodayRide | null>(null);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
   const userName = session?.user?.name?.split(" ")[0] || "there";
 
-  useEffect(() => {
-    if (initialData) return;
-    fetch("/api/dashboard")
-      .then((r) => r.json())
-      .then((payload) => {
-        if (payload && typeof payload.totalRides === "number") {
-          setData(payload);
-        } else {
-          setData(DEFAULT_DASHBOARD_DATA);
-        }
-      })
-      .catch(() => {
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dashboard", { cache: "no-store" });
+      const payload = await res.json();
+      if (payload && typeof payload.totalRides === "number") {
+        setData(payload);
+        setLastSynced(new Date());
+      } else if (!data) {
         setData(DEFAULT_DASHBOARD_DATA);
-      })
-      .finally(() => setLoading(false));
-  }, [initialData]);
+      }
+    } catch {
+      if (!data) setData(DEFAULT_DASHBOARD_DATA);
+    } finally {
+      setLoading(false);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (!initialData) {
+      fetchDashboard();
+    } else {
+      setLastSynced(new Date());
+    }
+  }, [initialData, fetchDashboard]);
+
+  // Live auto-refresh every 10 seconds when Live mode is active
+  useEffect(() => {
+    if (!isLive) return;
+    const timer = setInterval(() => {
+      fetchDashboard();
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [isLive, fetchDashboard]);
 
   const current = data || DEFAULT_DASHBOARD_DATA;
 
@@ -163,6 +225,42 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
 
   const activeFilterLabel =
     STATUS_FILTERS.find((f) => f.value === statusFilter)?.label ?? "All statuses";
+
+  function handleExportCsv() {
+    const header = [
+      "Status",
+      "Ride Number",
+      "Time",
+      "Pickup",
+      "Destination",
+      "Driver",
+      "Vehicle",
+      "Passengers",
+      "Kashaf PDF",
+    ];
+    const rows = filteredRides.map((r) => [
+      r.status,
+      r.rideNumber,
+      r.time || "",
+      r.pickup,
+      r.destination,
+      r.driver?.name || "Unassigned",
+      r.vehicle ? `${r.vehicle.make} ${r.vehicle.model} (${r.vehicle.plateNumber})` : "Unassigned",
+      String(r._count.passengers),
+      r.kashafDocuments.length > 0 ? "Ready" : "Pending",
+    ]);
+    const csv = [header, ...rows]
+      .map((cells) => cells.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `rihal-rides-${statusFilter.toLowerCase()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   if (loading && !data) {
     return (
@@ -185,9 +283,9 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       value: current.totalRides,
       icon: Car,
       trendValue: `${current.todayRides} today`,
-      trendLabel: "scheduled",
+      trendLabel: "in live feed",
       href: "/rides",
-      actionLabel: "View all rides",
+      isLiveMetric: true,
     },
     {
       id: "upcoming",
@@ -197,7 +295,7 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       trendValue: `${current.completedRides}`,
       trendLabel: "completed overall",
       href: "/rides",
-      actionLabel: "Open schedule",
+      isLiveMetric: false,
     },
     {
       id: "drivers",
@@ -207,7 +305,7 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       trendValue: `${current.totalPassengers}`,
       trendLabel: "registered passengers",
       href: "/drivers",
-      actionLabel: "Manage drivers",
+      isLiveMetric: false,
     },
     {
       id: "kashaf",
@@ -217,7 +315,7 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       trendValue: `${current.totalVehicles}`,
       trendLabel: "fleet vehicles",
       href: "/documents",
-      actionLabel: "View documents",
+      isLiveMetric: false,
     },
   ];
 
@@ -226,7 +324,9 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
       {/* Tallie Hero Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium text-muted-foreground">{getGreeting()}, {userName}</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            {getGreeting()}, {userName}
+          </p>
           <h1 className="font-serif text-3xl leading-snug tracking-tight text-foreground">
             Rihal Next Operations
           </h1>
@@ -236,13 +336,33 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-(--live)/10 px-3.5 py-2 text-xs font-medium text-(--live)">
-            <span className="size-2 rounded-full bg-(--live) live-dot-pulse" />
-            Live
-          </span>
+          <LiveBadge live={isLive} />
+
+          <Button
+            variant="default"
+            className="h-9.5 gap-1.5 rounded-lg px-3.5"
+            disabled={isLive}
+            onClick={() => {
+              setIsLive(true);
+              fetchDashboard();
+            }}
+          >
+            Live Sync
+            <Play className="size-3.5" />
+          </Button>
+
+          <Button
+            variant="outline"
+            className="h-9.5 gap-1.5 rounded-lg px-3.5 shadow-xs"
+            disabled={!isLive}
+            onClick={() => setIsLive(false)}
+          >
+            Pause
+            <Pause className="size-3.5" />
+          </Button>
 
           <Link href="/rides/new">
-            <Button variant="default" className="h-9.5 gap-1.5 rounded-lg px-3.5">
+            <Button variant="outline" className="h-9.5 gap-1.5 rounded-lg px-3.5 shadow-xs">
               <Plus className="size-4" />
               New Ride
             </Button>
@@ -301,9 +421,20 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                   <p className="text-3xl leading-none font-medium tracking-tight text-foreground">
                     {metric.value}
                   </p>
-                  <div className="flex items-center gap-1 text-xs">
-                    <ArrowUpRight className="size-3.5 text-(--trend)" />
-                    <span className="font-medium text-foreground">{metric.trendValue}</span>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    {metric.isLiveMetric ? (
+                      <SpinnerGapIcon
+                        className={cn(
+                          "size-3.5 text-(--status-processing)",
+                          isLive && "animate-spin"
+                        )}
+                      />
+                    ) : (
+                      <ArrowUpRight className="size-3.5 text-(--trend)" />
+                    )}
+                    <span className="font-medium text-foreground">
+                      {metric.isLiveMetric && !isLive ? "Paused" : metric.trendValue}
+                    </span>
                     <span className="text-muted-foreground">{metric.trendLabel}</span>
                   </div>
                 </div>
@@ -313,26 +444,30 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
         </div>
       </section>
 
-      {/* Today's Rides Table */}
+      {/* Tallie Live Ride Feed Table */}
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-medium tracking-tight">Today&apos;s Rides</h2>
-              <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {filteredRides.length}
-              </span>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-medium tracking-tight">Current Live Rides</h2>
+              <LiveBadge live={isLive} size="sm" />
             </div>
             <p className="text-sm text-muted-foreground">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
+              {isLive
+                ? `Live ride tracking with auto-refresh${
+                    lastSynced
+                      ? ` • Updated ${lastSynced.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })}`
+                      : ""
+                  }`
+                : "Live tracking paused — click Live Sync to resume"}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger
                 type="button"
@@ -349,14 +484,39 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                   value={statusFilter}
                   onValueChange={setStatusFilter}
                 >
-                  {STATUS_FILTERS.map((filter) => (
-                    <DropdownMenuRadioItem key={filter.value} value={filter.value}>
-                      {filter.label}
-                    </DropdownMenuRadioItem>
-                  ))}
+                  {STATUS_FILTERS.map((filter) => {
+                    const FilterIcon = filter.icon;
+                    return (
+                      <DropdownMenuRadioItem
+                        key={filter.value}
+                        value={filter.value}
+                        className="gap-2 text-muted-foreground data-[state=checked]:font-medium data-[state=checked]:text-foreground"
+                      >
+                        <FilterIcon
+                          className={cn(
+                            "size-4",
+                            filter.value === "IN_PROGRESS" && "text-(--status-processing)!",
+                            filter.value === "COMPLETED" && "text-(--status-completed)!",
+                            filter.value === "CANCELLED" && "text-(--status-exception)!"
+                          )}
+                        />
+                        {filter.label}
+                      </DropdownMenuRadioItem>
+                    );
+                  })}
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <Button
+              variant="outline"
+              className="h-8.5 gap-1.5 rounded-lg px-3.5 shadow-xs"
+              onClick={handleExportCsv}
+              disabled={filteredRides.length === 0}
+            >
+              Export
+              <FileUp className="size-3.5" />
+            </Button>
 
             <Link
               href="/rides"
@@ -371,110 +531,144 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
           </div>
         </div>
 
-        {filteredRides.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-zinc-50/50 py-14 text-center dark:bg-card/50">
-            <Calendar className="mb-3 size-9 text-muted-foreground/40" />
-            <p className="text-sm font-medium text-foreground">No rides scheduled today</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              <Link href="/rides/new" className="font-medium text-foreground underline underline-offset-4">
-                Create a ride
-              </Link>{" "}
-              to get started
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-background">
-            <Table>
-              <TableHeader>
+        <div className="overflow-hidden rounded-xl border border-border bg-zinc-50/40 dark:bg-card/40">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className={cn(tableHeadClassName, "min-w-36 px-4")}>
+                  Status
+                </TableHead>
+                <TableHead className={cn(tableHeadClassName, "min-w-40 px-3")}>
+                  Ride ID
+                </TableHead>
+                <TableHead className={cn(tableHeadClassName, "min-w-48 px-3")}>
+                  Route
+                </TableHead>
+                <TableHead className={cn(tableHeadClassName, "hidden min-w-44 px-3 md:table-cell")}>
+                  Driver & Vehicle
+                </TableHead>
+                <TableHead className={cn(tableHeadClassName, "hidden min-w-48 px-3 lg:table-cell")}>
+                  Manifest & Tags
+                </TableHead>
+                <TableHead className={cn(tableHeadClassName, "px-4 text-right")}>
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRides.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground dark:bg-card">
-                    Ride
-                  </TableHead>
-                  <TableHead className="h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground dark:bg-card">
-                    Route
-                  </TableHead>
-                  <TableHead className="hidden h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground md:table-cell dark:bg-card">
-                    Driver
-                  </TableHead>
-                  <TableHead className="hidden h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground lg:table-cell dark:bg-card">
-                    Vehicle
-                  </TableHead>
-                  <TableHead className="h-11 bg-zinc-50 px-4 text-xs font-medium tracking-tight text-muted-foreground dark:bg-card">
-                    Status
-                  </TableHead>
-                  <TableHead className="h-11 bg-zinc-50 px-4 text-right text-xs font-medium tracking-tight text-muted-foreground dark:bg-card">
-                    Actions
-                  </TableHead>
+                  <TableCell colSpan={6} className="h-36 px-4 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <Calendar className="mb-2 size-8 text-muted-foreground/40" />
+                      <p className="text-sm font-medium text-foreground">
+                        No rides match this filter today
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        <Link
+                          href="/rides/new"
+                          className="font-medium text-foreground underline underline-offset-4"
+                        >
+                          Create a ride
+                        </Link>{" "}
+                        or switch the status filter
+                      </p>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRides.map((ride) => {
+              ) : (
+                filteredRides.map((ride) => {
                   const hasKashaf = ride.kashafDocuments.length > 0;
                   const kashafDocId = ride.kashafDocuments[0]?.id;
-                  const statusInfo = getStatusDisplay(ride.status);
-                  const StatusIcon = statusInfo.Icon;
+                  const status = getStatusConfig(ride.status);
+                  const StatusIcon = status.Icon;
 
                   return (
                     <TableRow
                       key={ride.id}
+                      tabIndex={0}
                       onClick={() => setSelectedRide(ride)}
-                      className="cursor-pointer transition-colors hover:bg-muted/40"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedRide(ride);
+                        }
+                      }}
+                      className="h-18 cursor-pointer bg-background transition-colors hover:bg-muted/50"
                     >
                       <TableCell className="px-4 py-3.5">
-                        <div>
-                          <p className="font-mono text-xs font-medium text-foreground">
+                        <div
+                          className={cn(
+                            "inline-flex items-center gap-2 text-sm font-medium",
+                            status.className
+                          )}
+                        >
+                          <StatusIcon
+                            className={cn(
+                              "size-4 shrink-0",
+                              status.spinning && isLive && "animate-spin"
+                            )}
+                          />
+                          {status.label}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="px-3 py-3.5">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-mono text-sm font-medium tracking-tight text-foreground">
                             {ride.rideNumber}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {ride._count.passengers} pax • {ride.time || "—"}
-                          </p>
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Time: {ride.time || "—"}
+                          </span>
                         </div>
                       </TableCell>
 
-                      <TableCell className="px-4 py-3.5">
-                        <div className="flex items-center gap-1.5 text-xs text-foreground">
+                      <TableCell className="px-3 py-3.5">
+                        <div className="flex items-center gap-1.5 text-sm font-medium tracking-tight text-foreground">
                           <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
-                          <span className="max-w-[120px] truncate font-medium">{ride.pickup}</span>
+                          <span className="max-w-[115px] truncate">{ride.pickup}</span>
                           <ArrowRight className="size-3 shrink-0 text-muted-foreground" />
-                          <span className="max-w-[120px] truncate">{ride.destination}</span>
+                          <span className="max-w-[115px] truncate">{ride.destination}</span>
                         </div>
                       </TableCell>
 
-                      <TableCell className="hidden px-4 py-3.5 md:table-cell">
-                        {ride.driver?.name ? (
-                          <div className="flex items-center gap-2">
-                            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
-                              {ride.driver.name.charAt(0)}
-                            </div>
-                            <span className="max-w-[120px] truncate text-xs font-medium text-foreground">
-                              {ride.driver.name}
+                      <TableCell className="hidden px-3 py-3.5 md:table-cell">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-medium tracking-tight text-foreground">
+                            {ride.driver?.name || (
+                              <span className="italic text-muted-foreground">Unassigned</span>
+                            )}
+                          </span>
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {ride.vehicle
+                              ? `${ride.vehicle.make} • ${ride.vehicle.plateNumber}`
+                              : "No vehicle"}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="hidden px-3 py-3.5 lg:table-cell">
+                        <div className="flex flex-wrap gap-1.5">
+                          <span
+                            className={cn(
+                              "rounded px-2 py-0.5 text-xs font-medium tracking-tight",
+                              hasKashaf
+                                ? "bg-(--source-oracle)/15 text-(--source-oracle)"
+                                : "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {hasKashaf ? "Kashaf Ready" : "No Kashaf"}
+                          </span>
+                          <span className="rounded bg-(--source-sharepoint)/15 px-2 py-0.5 text-xs tracking-tight text-(--source-sharepoint)">
+                            {ride._count.passengers} Pax
+                          </span>
+                          {ride.driver && (
+                            <span className="rounded bg-(--source-concur)/15 px-2 py-0.5 text-xs tracking-tight text-(--source-concur)">
+                              Assigned
                             </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs italic text-muted-foreground">Unassigned</span>
-                        )}
-                      </TableCell>
-
-                      <TableCell className="hidden px-4 py-3.5 lg:table-cell">
-                        {ride.vehicle ? (
-                          <div className="text-xs">
-                            <p className="font-medium text-foreground">
-                              {ride.vehicle.make} {ride.vehicle.model}
-                            </p>
-                            <p className="font-mono text-[11px] text-muted-foreground">
-                              {ride.vehicle.plateNumber}
-                            </p>
-                          </div>
-                        ) : (
-                          <span className="text-xs italic text-muted-foreground">Unassigned</span>
-                        )}
-                      </TableCell>
-
-                      <TableCell className="px-4 py-3.5">
-                        <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium", statusInfo.className)}>
-                          <StatusIcon className={cn("size-3.5", ride.status === "IN_PROGRESS" && "animate-spin")} />
-                          {statusInfo.label}
-                        </span>
+                          )}
+                        </div>
                       </TableCell>
 
                       <TableCell
@@ -508,14 +702,14 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                       </TableCell>
                     </TableRow>
                   );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </section>
 
-      {/* Slide-over Ride Quick-View Sheet (Tallie style) */}
+      {/* Slide-over Ride Quick-View Sheet */}
       <Sheet open={Boolean(selectedRide)} onOpenChange={(open) => !open && setSelectedRide(null)}>
         <SheetContent className="tallie-dashboard sm:max-w-md">
           {selectedRide && (
