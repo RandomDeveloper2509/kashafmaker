@@ -658,7 +658,7 @@ export default function ReportsPage() {
                             </span>
                             {hasKashaf && kashafId ? (
                               <a
-                                href={`/api/documents/${kashafId}?download=true`}
+                                href={`/api/documents/${kashafId}?download=1`}
                                 className={buttonVariants({
                                   variant: "outline",
                                   size: "xs",

@@ -124,8 +124,10 @@ export async function GET(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const download = request.nextUrl.searchParams.get("download") === "1";
-  const pdf = request.nextUrl.searchParams.get("pdf") === "1";
+  const downloadParam = request.nextUrl.searchParams.get("download");
+  const download = downloadParam === "1" || downloadParam === "true";
+  const pdfParam = request.nextUrl.searchParams.get("pdf");
+  const pdf = pdfParam === "1" || pdfParam === "true";
 
   if (download || pdf) {
     return servePdf(id, download);

@@ -662,15 +662,18 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                 <TableHead className={cn(tableHeadClassName, "hidden min-w-40 px-3 md:table-cell")}>
                   Sources
                 </TableHead>
-                <TableHead className={cn(tableHeadClassName, "px-4 text-right min-w-24")}>
+                <TableHead className={cn(tableHeadClassName, "min-w-24 px-3")}>
                   Readiness
+                </TableHead>
+                <TableHead className={cn(tableHeadClassName, "px-4 text-right min-w-32")}>
+                  Actions
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRides.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="h-36 px-4 text-center">
+                  <TableCell colSpan={7} className="h-36 px-4 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Calendar className="mb-2 size-8 text-muted-foreground/40" />
                       <p className="text-sm font-medium text-foreground">
@@ -782,36 +785,40 @@ export function DashboardContent({ initialData }: { initialData?: DashboardData 
                       </TableCell>
 
                       {/* Readiness / Confidence */}
+                      <TableCell className="px-3 py-3">
+                        <ConfidenceBar score={conf.score} className={conf.className} />
+                      </TableCell>
+
+                      {/* Actions */}
                       <TableCell
                         className="px-4 py-3 text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <div className="flex flex-col items-end gap-1">
-                          <ConfidenceBar score={conf.score} className={conf.className} />
-                          <div className="flex gap-1">
-                            {hasKashaf && kashafDocId && (
-                              <a
-                                href={`/api/documents/${kashafDocId}?download=true`}
-                                className={buttonVariants({
-                                  variant: "outline",
-                                  size: "xs",
-                                  className: "h-6 gap-1 rounded-md px-2 text-[10px]",
-                                })}
-                              >
-                                <Download className="size-3" /> PDF
-                              </a>
-                            )}
-                            <Link
-                              href={`/rides/${ride.id}`}
+                        <div className="flex items-center justify-end gap-1.5">
+                          {hasKashaf && kashafDocId && (
+                            <a
+                              href={`/api/documents/${kashafDocId}?download=1`}
                               className={buttonVariants({
-                                variant: "secondary",
+                                variant: "outline",
                                 size: "xs",
-                                className: "h-6 gap-1 rounded-md px-2 text-[10px]",
+                                className: "h-7 gap-1 rounded-md px-2.5 text-xs font-medium",
                               })}
                             >
-                              Open <ArrowRight className="size-3" />
-                            </Link>
-                          </div>
+                              <Download className="size-3" />
+                              PDF
+                            </a>
+                          )}
+                          <Link
+                            href={`/rides/${ride.id}`}
+                            className={buttonVariants({
+                              variant: "secondary",
+                              size: "xs",
+                              className: "h-7 gap-1 rounded-md border border-border/60 px-2.5 text-xs font-medium",
+                            })}
+                          >
+                            Open
+                            <ArrowRight className="size-3" />
+                          </Link>
                         </div>
                       </TableCell>
                     </TableRow>
