@@ -14,8 +14,8 @@ const AUTH_COOKIE_NAMES = [
 
 /**
  * GET /api/auth/logout
- * Explicitly clears all Auth.js cookies on a non-cacheable 302 NextResponse
- * (avoiding Next.js Route Handler `redirect()` cookie-drop issues) and redirects to /login.
+ * Returns 200 OK HTML (instead of 302) so browsers reliably commit both
+ * Set-Cookie deletions and Clear-Site-Data: "cookies" before navigating to /login.
  */
 export async function GET(req: NextRequest) {
   let authCookies: Array<{
@@ -33,16 +33,30 @@ export async function GET(req: NextRequest) {
     // Proceed with manual cookie clearing even if signOut throws
   }
 
-  const response = NextResponse.redirect(new URL("/login", req.url), {
-    status: 302,
-  });
+  const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="refresh" content="0;url=/login" />
+    <title>Signing out…</title>
+  </head>
+  <body style="background:#080810;color:#fff;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+    <p>Signing out…</p>
+    <script>
+      window.location.replace("/login");
+    </script>
+  </body>
+</html>`;
 
-  response.headers.set(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate"
-  );
-  response.headers.set("Pragma", "no-cache");
-  response.headers.set("Expires", "0");
+  const response = new NextResponse(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+  });
 
   const isHttps =
     req.headers.get("x-forwarded-proto") === "https" ||
@@ -52,7 +66,6 @@ export async function GET(req: NextRequest) {
     response.headers.set("Clear-Site-Data", '"cookies"');
   }
 
-  // Apply exact cookie deletions returned by Auth.js
   for (const c of authCookies) {
     response.cookies.set(c.name, c.value ?? "", {
       ...(c.options as Record<string, unknown>),
@@ -62,13 +75,9 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Also explicitly expire any matching auth cookies present on the request
   const toClear = new Set<string>(AUTH_COOKIE_NAMES);
   for (const c of req.cookies.getAll()) {
-    if (
-      c.name.includes("authjs") ||
-      c.name.includes("next-auth")
-    ) {
+    if (c.name.includes("authjs") || c.name.includes("next-auth")) {
       toClear.add(c.name);
     }
   }
