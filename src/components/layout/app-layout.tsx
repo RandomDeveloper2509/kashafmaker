@@ -2,7 +2,8 @@
 
 import type { CSSProperties } from "react";
 import { Sidebar } from "./sidebar";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { logoutAndRedirect } from "@/lib/auth/logout";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus, ChevronRight, Home, ChevronDown, LogOut, Settings } from "lucide-react";
@@ -156,7 +157,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   )}
                   <DropdownMenuItem
                     variant="destructive"
-                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    onSelect={() => {
+                      void logoutAndRedirect();
+                    }}
                   >
                     <LogOut />
                     Log out

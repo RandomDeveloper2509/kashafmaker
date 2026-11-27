@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { logoutAndRedirect } from "@/lib/auth/logout";
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { ToggleIcon } from "@/components/watermelon/tallie-dashboard/components/tallie/icons";
 import { useTheme } from "@/components/watermelon/tallie-dashboard/components/tallie/theme-provider";
@@ -250,7 +251,9 @@ export function Sidebar({ userName }: { userName?: string }) {
                 )}
                 <DropdownMenuItem
                   variant="destructive"
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onSelect={() => {
+                    void logoutAndRedirect();
+                  }}
                 >
                   <LogOut />
                   Sign out
