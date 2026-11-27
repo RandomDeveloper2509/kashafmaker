@@ -1,7 +1,7 @@
 // Rihal Next Service Worker for PWA
-const CACHE_NAME = "rihal-next-pwa-v1";
+const CACHE_NAME = "rihal-next-pwa-v2";
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
@@ -20,7 +20,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
-  // Network-first approach: Always fetch latest data from server
+  const url = new URL(event.request.url);
+  // Never intercept API routes or full-page navigations (preserves auth redirects & cookies)
+  if (url.pathname.startsWith("/api/") || event.request.mode === "navigate") {
+    return;
+  }
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
