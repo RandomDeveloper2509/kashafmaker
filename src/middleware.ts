@@ -6,10 +6,11 @@ const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-  const isLoginPage = req.nextUrl.pathname === "/login";
-  const isHomePage = req.nextUrl.pathname === "/home" || req.nextUrl.pathname.startsWith("/home/");
-  const isApiAuth = req.nextUrl.pathname.startsWith("/api/auth");
   const pathname = req.nextUrl.pathname;
+  const isLoginPage = pathname === "/login";
+  const isHomePage = pathname === "/home" || pathname.startsWith("/home/");
+  const isRootPage = pathname === "/";
+  const isApiAuth = pathname.startsWith("/api/auth");
   const role = req.auth?.user?.role;
 
   // Allow all auth API routes
@@ -17,6 +18,13 @@ export default auth((req) => {
 
   // Allow public marketing/sales home page
   if (isHomePage) return NextResponse.next();
+
+  // Root "/" → logged-in users go to dashboard, everyone else to /home
+  if (isRootPage) {
+    return NextResponse.redirect(
+      new URL(isLoggedIn ? "/dashboard" : "/home", req.url)
+    );
+  }
 
   // Allow API routes to be handled by their own auth logic
   if (pathname.startsWith("/api/")) return NextResponse.next();
