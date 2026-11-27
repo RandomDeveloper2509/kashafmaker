@@ -24,6 +24,7 @@ import { signOut, useSession } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { ToggleIcon } from "@/components/watermelon/tallie-dashboard/components/tallie/icons";
 import { useTheme } from "@/components/watermelon/tallie-dashboard/components/tallie/theme-provider";
+import { GlassIconReveal } from "@/components/ui/liquid-glass-logo-reveal";
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent,
@@ -126,11 +127,22 @@ export function Sidebar({ userName }: { userName?: string }) {
           }}
           className="flex items-center gap-2.5 overflow-hidden rounded-lg px-1 py-1"
         >
-          <img
-            src="/logo.png"
-            alt="Rihal Next Logo"
-            className="h-9 w-9 shrink-0 rounded-full object-contain shadow-xs"
-          />
+          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full shadow-xs">
+            <GlassIconReveal
+              logo="/logo.png"
+              label="Rihal Next Logo"
+              look={isDark ? "dark" : "light"}
+              background={isDark ? "#18181b" : "#fafafa"}
+              originalColors
+              iconPlate={false}
+              keepPlate={false}
+              tileSize={36}
+              logoScale={0.8}
+              finalScale={0.9}
+              hold={3}
+              className="h-9 w-9 rounded-full"
+            />
+          </div>
           <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
             <p className="truncate text-sm font-semibold text-sidebar-foreground leading-tight">
               Rihal Next

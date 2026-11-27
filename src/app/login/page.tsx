@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { InstallAppButton } from "@/components/pwa/install-button";
+import { GlassIconReveal } from "@/components/ui/liquid-glass-logo-reveal";
 
 const RING_SIZES = [300, 372, 452, 542, 644, 758, 884, 1000] as const;
 
@@ -204,16 +205,25 @@ export default function LoginPage() {
             style={{ animation: "login-rise 0.7s 0.08s cubic-bezier(0.16,1,0.3,1) both", opacity: 0 }}
           >
             <div
-              className="relative flex h-14 w-14 items-center justify-center rounded-2xl"
+              className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, rgba(2,238,255,0.18), rgba(127,160,255,0.18))",
                 boxShadow: "0 0 0 1px rgba(2,238,255,0.25), 0 8px 24px rgba(2,238,255,0.15)",
               }}
             >
-              <img
-                src="/logo.png"
-                alt="Rihal Next"
-                className="h-10 w-10 rounded-xl object-contain"
+              <GlassIconReveal
+                logo="/logo.png"
+                label="Rihal Next"
+                look="dark"
+                background="#0c101b"
+                plateColor="#0c101b"
+                originalColors
+                iconPlate={false}
+                keepPlate={false}
+                tileSize={64}
+                logoScale={0.78}
+                finalScale={0.9}
+                hold={3}
+                className="h-16 w-16 rounded-2xl"
               />
             </div>
             <div className="text-center">
