@@ -11,10 +11,7 @@ const SESSION_COOKIE_PREFIXES = [
   "__Secure-authjs.callback-url",
 ];
 
-export async function POST(req: NextRequest) {
-  const res = NextResponse.json({ ok: true });
-
-  // Clear all known Auth.js / NextAuth cookies, including any chunked variants
+function clearAuthCookies(req: NextRequest, res: NextResponse) {
   const existingCookies = req.cookies.getAll().map((c) => c.name);
   const toClear = new Set<string>(SESSION_COOKIE_PREFIXES);
 
@@ -28,17 +25,45 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const isHttps =
+    req.headers.get("x-forwarded-proto") === "https" ||
+    req.nextUrl.protocol === "https:";
+
   for (const name of toClear) {
-    const isSecure = name.startsWith("__Secure-") || name.startsWith("__Host-");
+    const isSecurePrefix =
+      name.startsWith("__Secure-") || name.startsWith("__Host-");
     res.cookies.set(name, "", {
       path: "/",
       maxAge: 0,
       expires: new Date(0),
       httpOnly: true,
       sameSite: "lax",
-      secure: isSecure,
+      secure: isSecurePrefix || isHttps,
     });
   }
+}
 
+export async function GET(req: NextRequest) {
+  const res = new NextResponse(null, {
+    status: 302,
+    headers: {
+      Location: "/login",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
+  clearAuthCookies(req, res);
+  return res;
+}
+
+export async function POST(req: NextRequest) {
+  const res = NextResponse.json(
+    { ok: true },
+    {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    }
+  );
+  clearAuthCookies(req, res);
   return res;
 }

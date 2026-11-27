@@ -205,18 +205,18 @@ export default function LoginPage() {
             style={{ animation: "login-rise 0.7s 0.08s cubic-bezier(0.16,1,0.3,1) both", opacity: 0 }}
           >
             <div
-              className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl"
+              className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white"
               style={{
-                boxShadow: "0 0 0 1px rgba(2,238,255,0.25), 0 8px 24px rgba(2,238,255,0.15)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.35), 0 8px 28px rgba(2,238,255,0.2)",
               }}
             >
               <GlassIconReveal
                 logo="/logo.png"
                 label="Rihal Next"
-                look="dark"
-                background="#0c101b"
-                plateColor="#0c101b"
-                logoColor="#ffffff"
+                look="light"
+                background="#ffffff"
+                plateColor="#ffffff"
+                originalColors
                 iconPlate={false}
                 keepPlate={false}
                 tileSize={64}

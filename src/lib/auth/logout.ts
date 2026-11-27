@@ -1,23 +1,6 @@
 "use client";
 
-import { signOut } from "next-auth/react";
-
-let loggingOut = false;
-
-export async function logoutAndRedirect() {
-  if (loggingOut) return;
-  loggingOut = true;
-
-  try {
-    await Promise.allSettled([
-      signOut({ redirect: false }),
-      fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      }),
-    ]);
-  } finally {
-    // Hard redirect clears any client-side Next.js router/session cache
-    window.location.replace("/login");
-  }
+export function logoutAndRedirect() {
+  // Direct server navigation clears all Auth.js cookies atomically with 302 -> /login
+  window.location.assign("/api/auth/logout");
 }
