@@ -3,10 +3,10 @@
 import type { CSSProperties } from "react";
 import { Sidebar } from "./sidebar";
 import { useSession } from "next-auth/react";
-import { signOut } from "next-auth/react";
+import { LogoutButton } from "@/components/layout/logout-button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus, ChevronRight, Home, ChevronDown, LogOut, Settings } from "lucide-react";
+import { Plus, ChevronRight, Home, ChevronDown, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToastProvider } from "@/components/ui/toast";
 import { InstallAppButton } from "@/components/pwa/install-button";
@@ -155,15 +155,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onSelect={() => {
-                      void signOut({ callbackUrl: "/home" });
-                    }}
-                  >
-                    <LogOut />
-                    Log out
-                  </DropdownMenuItem>
+                  <LogoutButton label="Log out" />
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

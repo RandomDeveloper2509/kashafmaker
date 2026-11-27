@@ -13,7 +13,6 @@ import {
   Files,
   BarChart3,
   Settings,
-  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   User as UserIcon,
@@ -21,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { signOut } from "next-auth/react";
+import { LogoutButton } from "@/components/layout/logout-button";
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { ToggleIcon } from "@/components/watermelon/tallie-dashboard/components/tallie/icons";
 import { useTheme } from "@/components/watermelon/tallie-dashboard/components/tallie/theme-provider";
@@ -249,15 +248,7 @@ export function Sidebar({ userName }: { userName?: string }) {
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem
-                  variant="destructive"
-                  onSelect={() => {
-                    void signOut({ callbackUrl: "/home" });
-                  }}
-                >
-                  <LogOut />
-                  Sign out
-                </DropdownMenuItem>
+                <LogoutButton label="Sign out" />
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
