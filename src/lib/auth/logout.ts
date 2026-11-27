@@ -1,6 +1,7 @@
 "use client";
 
-export function logoutAndRedirect() {
-  // Direct server navigation clears all Auth.js cookies atomically with 302 -> /login
-  window.location.assign("/api/auth/logout");
+import { logoutAction } from "@/app/actions/auth";
+
+export async function logoutAndRedirect() {
+  await logoutAction();
 }
