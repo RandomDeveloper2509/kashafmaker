@@ -43,7 +43,19 @@ export async function GET(req: NextRequest) {
   <body style="background:#080810;color:#fff;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
     <p>Signing out…</p>
     <script>
-      window.location.replace("/login");
+      (async function () {
+        try {
+          if ("caches" in window) {
+            var keys = await caches.keys();
+            await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+          }
+          if ("serviceWorker" in navigator) {
+            var regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(function (r) { return r.update().catch(function () {}); }));
+          }
+        } catch (e) {}
+        window.location.replace("/login");
+      })();
     </script>
   </body>
 </html>`;
@@ -63,7 +75,7 @@ export async function GET(req: NextRequest) {
     req.nextUrl.protocol === "https:";
 
   if (isHttps) {
-    response.headers.set("Clear-Site-Data", '"cookies"');
+    response.headers.set("Clear-Site-Data", '"cookies", "cache"');
   }
 
   for (const c of authCookies) {
