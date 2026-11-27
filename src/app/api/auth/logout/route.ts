@@ -14,8 +14,10 @@ const AUTH_COOKIE_NAMES = [
 
 /**
  * GET /api/auth/logout
- * Returns 200 OK HTML (instead of 302) so browsers reliably commit both
- * Set-Cookie deletions and Clear-Site-Data: "cookies" before navigating to /login.
+ * Clears all Auth.js cookies via Set-Cookie + Clear-Site-Data.
+ * If an older Service Worker controlled this request (which causes browsers to
+ * ignore Clear-Site-Data), the page unregisters the SW and reloads once with
+ * ?cleaned=1 so Clear-Site-Data runs unintercepted before going to /login.
  */
 export async function GET(req: NextRequest) {
   let authCookies: Array<{
@@ -37,23 +39,29 @@ export async function GET(req: NextRequest) {
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0;url=/login" />
     <title>Signing out…</title>
+    <noscript><meta http-equiv="refresh" content="0;url=/login" /></noscript>
   </head>
   <body style="background:#080810;color:#fff;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
     <p>Signing out…</p>
     <script>
       (async function () {
+        var hadController = false;
         try {
           if ("caches" in window) {
             var keys = await caches.keys();
             await Promise.all(keys.map(function (k) { return caches.delete(k); }));
           }
           if ("serviceWorker" in navigator) {
+            hadController = !!navigator.serviceWorker.controller;
             var regs = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(regs.map(function (r) { return r.update().catch(function () {}); }));
+            await Promise.all(regs.map(function (r) { return r.unregister().catch(function () {}); }));
           }
         } catch (e) {}
+        if (hadController && location.search.indexOf("cleaned=1") === -1) {
+          window.location.replace("/api/auth/logout?cleaned=1");
+          return;
+        }
         window.location.replace("/login");
       })();
     </script>
@@ -75,7 +83,7 @@ export async function GET(req: NextRequest) {
     req.nextUrl.protocol === "https:";
 
   if (isHttps) {
-    response.headers.set("Clear-Site-Data", '"cookies", "cache"');
+    response.headers.set("Clear-Site-Data", '"cookies"');
   }
 
   for (const c of authCookies) {
