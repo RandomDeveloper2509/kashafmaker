@@ -216,12 +216,12 @@ export default function LoginPage() {
                 look="dark"
                 background="#0c101b"
                 plateColor="#0c101b"
-                originalColors
+                logoColor="#ffffff"
                 iconPlate={false}
                 keepPlate={false}
                 tileSize={64}
                 logoScale={0.78}
-                finalScale={0.9}
+                finalScale={0.85}
                 hold={3}
                 className="h-16 w-16 rounded-2xl"
               />
