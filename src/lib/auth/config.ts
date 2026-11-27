@@ -12,9 +12,10 @@ export const authConfig = {
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
       const isLoginPage = request.nextUrl.pathname === "/login";
+      const isHomePage = request.nextUrl.pathname === "/home" || request.nextUrl.pathname.startsWith("/home/");
       const isApiAuth = request.nextUrl.pathname.startsWith("/api/auth");
       if (isApiAuth) return true;
-      if (isLoginPage) return true;
+      if (isLoginPage || isHomePage) return true;
       return isLoggedIn;
     },
     async jwt({ token, user }) {
