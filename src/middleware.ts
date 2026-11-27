@@ -8,28 +8,20 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const pathname = req.nextUrl.pathname;
   const isLoginPage = pathname === "/login";
-  const isHomePage = pathname === "/home" || pathname.startsWith("/home/");
-  const isRootPage = pathname === "/";
   const isApiAuth = pathname.startsWith("/api/auth");
+  const isHomePage = pathname === "/home" || pathname.startsWith("/home/");
   const role = req.auth?.user?.role;
 
-  // Allow all auth API routes
+  // Allow Auth.js API routes through
   if (isApiAuth) return NextResponse.next();
 
-  // Allow public marketing/sales home page
+  // Allow public home/marketing page
   if (isHomePage) return NextResponse.next();
 
-  // Root "/" → logged-in users go to dashboard, everyone else to /home
-  if (isRootPage) {
-    return NextResponse.redirect(
-      new URL(isLoggedIn ? "/dashboard" : "/home", req.url)
-    );
-  }
-
-  // Allow API routes to be handled by their own auth logic
+  // Allow API routes
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
-  // Allow static files, PWA assets and public media
+  // Allow static files
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
@@ -42,12 +34,12 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // Redirect to login if not logged in (except login page)
+  // Not logged in → send to login
   if (!isLoggedIn && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Redirect to dashboard if logged in and on login page
+  // Logged in and on login page → send to dashboard
   if (isLoggedIn && isLoginPage) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
