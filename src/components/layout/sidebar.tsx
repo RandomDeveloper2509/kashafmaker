@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { logoutAndRedirect } from "@/lib/auth/logout";
+import { signOut } from "next-auth/react";
 import { InstallAppButton } from "@/components/pwa/install-button";
 import { ToggleIcon } from "@/components/watermelon/tallie-dashboard/components/tallie/icons";
 import { useTheme } from "@/components/watermelon/tallie-dashboard/components/tallie/theme-provider";
@@ -252,7 +252,7 @@ export function Sidebar({ userName }: { userName?: string }) {
                 <DropdownMenuItem
                   variant="destructive"
                   onSelect={() => {
-                    void logoutAndRedirect();
+                    void signOut({ callbackUrl: "/home" });
                   }}
                 >
                   <LogOut />
